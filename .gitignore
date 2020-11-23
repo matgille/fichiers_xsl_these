@@ -9,4 +9,9 @@
 *.log  
 *.run.xml  
 *.toc
+*.out
+These/
+pdf/
+bibliographie/
+pdf/
 
