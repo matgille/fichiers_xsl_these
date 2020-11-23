@@ -1,5 +1,11 @@
 *.bib  
-*.tex  
+these.tex  
+extraction_exemples_glose.tex
+sommaire_graphique_edition.tex
+tableau_resume.tex
+tableau_resume_titre.tex
+extraction_incipit_exemples_glose.tex
+biblio.tex
 *.bbl
 *.lof 
 *.pdf      
@@ -14,5 +20,4 @@ These/
 pdf/
 bibliographie/
 pdf/
-tex/
 
