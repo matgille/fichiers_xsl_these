@@ -5,12 +5,14 @@ sommaire_graphique_edition.tex
 tableau_resume.tex
 tableau_resume_titre.tex
 extraction_incipit_exemples_glose.tex
+preambule.tex
+principal.tex
 biblio.tex
 *.bbl
 *.lof 
 *.pdf      
 *.aux 
- *.bcf  
+*.bcf  
 *.blg  
 *.log  
 *.run.xml  
