@@ -1,0 +1,12 @@
+*.bib  
+*.tex  
+*.bbl
+*.lof 
+*.pdf      
+*.aux 
+ *.bcf  
+*.blg  
+*.log  
+*.run.xml  
+*.toc
+
