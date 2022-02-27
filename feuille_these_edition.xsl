@@ -277,31 +277,6 @@ pourra modifier les espaces simplement (translate ou un autre truc) ainsi qu'ada
         <xsl:text> </xsl:text>
     </xsl:template>
 
-    <xsl:template match="tei:w" mode="edition">
-        <xsl:if test="not(parent::tei:del[count(descendant::tei:w) = 1])">
-            <xsl:text> </xsl:text>
-        </xsl:if>
-        <xsl:variable name="current_position" select="count(preceding::tei:w)"/>
-        <xsl:variable name="same_word_before"
-            select="preceding::tei:w[($current_position - 10) > count(preceding::tei:w) and not(count(preceding::tei:w) > $current_position)]/text() = text()"/>
-        <xsl:variable name="same_word_after"
-            select="following::tei:w[($current_position + 10) > count(preceding::tei:w)][count(preceding::tei:w) > $current_position]/text() = text()"/>
-        <xsl:choose>
-            <xsl:when test="$same_word_before or $same_word_after">
-                <xsl:text>\sameword{</xsl:text>
-                <xsl:apply-templates mode="citation_apparat"/>
-                <xsl:text>}</xsl:text>
-            </xsl:when>
-            <xsl:otherwise>
-                <xsl:apply-templates mode="citation_apparat"/>
-            </xsl:otherwise>
-        </xsl:choose>
-        <xsl:choose>
-            <xsl:when test="following::tei:pc[1]"/>
-            <xsl:otherwise> </xsl:otherwise>
-        </xsl:choose>
-    </xsl:template>
-
 
     <!--Édition du texte latin en annexe-->
 

@@ -263,7 +263,8 @@
 
 
     <xsl:template match="tei:app" priority="2" mode="citation_apparat">
-        <!--Il faut transmettre le paramètre du témoin courant à la règle de priorité inférieure-->
+        <!--On crée cette règle qui a la plus grande priorité: on va d'abord aller regarder si le tei:app est entre
+        deux ancres tei:witEnd et tei:witStart, pour s'occuper de l'omission.-->
         <xsl:param name="temoin_courant"/>
         <xsl:variable name="precedingWitEnd"
             select="boolean(preceding::node()[self::tei:witEnd or self::tei:witStart][1][self::tei:witEnd])"/>
@@ -548,54 +549,30 @@
         </xsl:choose>
     </xsl:template>
 
-    <xsl:template match="tei:w" mode="citation_apparat">
-        <xsl:if test="not(parent::tei:del[count(descendant::tei:w) = 1])">
-            <xsl:text> </xsl:text>
-        </xsl:if>
-        <xsl:variable name="current_position" select="count(preceding::tei:w)"/>
-        <xsl:variable name="same_word_around"
-            select="preceding::tei:w[($current_position - 10) > count(preceding::tei:w) and not(count(preceding::tei:w) > $current_position + 10)]/text() = text()"/>
-        <xsl:choose>
-            <xsl:when test="$same_word_around">
-                <xsl:text>\sameword{</xsl:text>
-                <xsl:apply-templates mode="citation_apparat"/>
-                <xsl:text>}</xsl:text>
-            </xsl:when>
-            <xsl:otherwise>
-                <xsl:apply-templates mode="citation_apparat"/>
-            </xsl:otherwise>
-        </xsl:choose>
-        <xsl:choose>
-            <xsl:when test="following::tei:pc[1]"/>
-            <xsl:otherwise> </xsl:otherwise>
-        </xsl:choose>
-    </xsl:template>
 
     <xsl:template match="tei:note" mode="citation_apparat"/>
 
 
 
-    <xsl:function name="chezmoi:witstosigla">
-        <xsl:param name="witnesses"/>
-        <xsl:for-each select="tokenize(string-join($witnesses, ' '), '\s')">
-            <xsl:value-of select="substring-after(., '_')"/>
-        </xsl:for-each>
-    </xsl:function>
 
-    <xsl:template match="tei:w" mode="#all" priority="4">
+    <xsl:template match="tei:w" mode="#all">
         <xsl:if test="not(parent::tei:del[count(descendant::tei:w) = 1])">
             <xsl:text> </xsl:text>
         </xsl:if>
         <xsl:variable name="current_position" select="count(preceding::tei:w)"/>
+        <!--Ces deux variables vérifient que le mot n'est pas déjà présent dans un contexte de 10 [mots, pas apparats]-->
         <xsl:variable name="same_word_before"
             select="preceding::tei:w[($current_position - 10) > count(preceding::tei:w) and not(count(preceding::tei:w) > $current_position)]/text() = text()"/>
         <xsl:variable name="same_word_after"
             select="following::tei:w[($current_position + 10) > count(preceding::tei:w)][count(preceding::tei:w) > $current_position]/text() = text()"/>
+        <!--Ces deux variables vérifient que le mot n'est pas déjà présent dans un contexte de 10 [mots, pas apparats]-->
         <xsl:choose>
             <xsl:when test="$same_word_before or $same_word_after">
+                <!--\sameword va permettre de désambiguiser les mots identiques sur la même ligne-->
                 <xsl:text>\sameword{</xsl:text>
                 <xsl:apply-templates mode="citation_apparat"/>
                 <xsl:text>}</xsl:text>
+                <!--\sameword va permettre de désambiguiser les mots identiques sur la même ligne-->
             </xsl:when>
             <xsl:otherwise>
                 <xsl:apply-templates mode="citation_apparat"/>
