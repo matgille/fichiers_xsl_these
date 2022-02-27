@@ -137,39 +137,41 @@
     <xsl:template match="tei:seg[@ana = '#transposition']" mode="citation_apparat">
         <xsl:apply-templates select="descendant::tei:rdg[contains(@wit, $temoin_courant)]/tei:w"
             mode="citation_apparat"/>
+        <!--Incompatibilité avec les omissions, voir comment on gère le problème-->
     </xsl:template>
     <!--On ignore les transposition simples: on va imprimer le texte du témoin courant-->
 
     <xsl:template match="tei:witEnd" mode="citation_apparat">
         <xsl:param name="temoin_courant"/>
-        <xsl:variable name="firstBourdaryCorresps" select="@corresp"/>
-        <xsl:variable name="lastBoudaryCorresps"
+        <xsl:variable name="firstAnchorCorresps" select="@corresp"/>
+        <xsl:variable name="lastAnchorCorresps"
             select="following::node()[self::tei:witEnd or self::tei:witStart][1][self::tei:witStart]/@corresp"/>
-        <xsl:variable name="firstBourdaryID" select="@xml:id"/>
-        <xsl:variable name="lastBoudaryID"
+        <xsl:variable name="firstAnchorID" select="@xml:id"/>
+        <xsl:variable name="lastAnchorID"
             select="following::node()[self::tei:witEnd or self::tei:witStart][1][self::tei:witStart]/@xml:id"/>
         <xsl:text>
         </xsl:text>
         <xsl:choose>
-            <xsl:when test="$firstBourdaryCorresps = $lastBoudaryCorresps">
+            <xsl:when test="$firstAnchorCorresps = $lastAnchorCorresps">
                 <xsl:choose>
                     <!--Premier cas: le témoin courant n'omet pas le texte-->
-                    <xsl:when test="not(contains($firstBourdaryCorresps, $temoin_courant))">
+                    <xsl:when test="not(contains($firstAnchorCorresps, $temoin_courant))">
                         <xsl:text>\edtext{</xsl:text>
+                        <!--La transposition va poser problème ici dans les cas de suites d'apparats compliqués Passer dans l'@ana des tei:app la transposition.-->
                         <xsl:apply-templates
-                            select="following::node()[following::node()[@xml:id = $lastBoudaryID]][self::tei:app]"
+                            select="following::node()[following::node()[@xml:id = $lastAnchorID]][self::tei:app][not(ancestor::tei:seg[@ana = '#transposition'])]"
                             mode="citation_omission_complexe"/>
                         <xsl:text>}{</xsl:text>
                         <xsl:text>\lemma{</xsl:text>
                         <xsl:apply-templates
-                            select="following::node()[following::node()[@xml:id = $lastBoudaryID]][self::tei:app][1]"
+                            select="following::node()[following::node()[@xml:id = $lastAnchorID]][self::tei:app][1]"
                             mode="citation_omission_complexe"/>
                         <xsl:text>\ldots ~</xsl:text>
                         <xsl:apply-templates
-                            select="following::node()[following::node()[@xml:id = $lastBoudaryID]][self::tei:app][last()]"
+                            select="following::node()[following::node()[@xml:id = $lastAnchorID]][self::tei:app][last()]"
                             mode="citation_omission_complexe"/>
                         <xsl:text>}\Dfootnote{\,|\,\textit{om.} \textit{</xsl:text>
-                        <xsl:value-of select="chezmoi:witstosigla($firstBourdaryCorresps)"/>
+                        <xsl:value-of select="chezmoi:witstosigla($firstAnchorCorresps)"/>
                         <xsl:text>}}}</xsl:text>
                     </xsl:when>
                     <xsl:otherwise>
@@ -202,7 +204,7 @@
                         <xsl:apply-templates select="$first_preceding_sibling"/>
                         <xsl:text> </xsl:text>
                         <xsl:apply-templates
-                            select="following::node()[following::node()[@xml:id = $lastBoudaryID]][self::tei:app]"
+                            select="following::node()[following::node()[@xml:id = $lastAnchorID]][self::tei:app]"
                             mode="citation_omission_complexe"/>
                         <xsl:text>}}</xsl:text>
                     </xsl:otherwise>
@@ -267,18 +269,18 @@
             select="boolean(preceding::node()[self::tei:witEnd or self::tei:witStart][1][self::tei:witEnd])"/>
         <xsl:variable name="followingWitStart"
             select="boolean(following::node()[self::tei:witEnd or self::tei:witStart][1][self::tei:witStart])"/>
-        <xsl:variable name="firstBourdaryCorresps"
+        <xsl:variable name="firstAnchorCorresps"
             select="preceding::node()[self::tei:witEnd or self::tei:witStart][1][self::tei:witEnd]/@corresp"/>
-        <xsl:variable name="lastBoudaryCorresps"
+        <xsl:variable name="lastAnchorCorresps"
             select="following::node()[self::tei:witEnd or self::tei:witStart][1][self::tei:witStart]/@corresp"/>
-        <xsl:variable name="firstBourdaryID"
+        <xsl:variable name="firstAnchorID"
             select="preceding::node()[self::tei:witEnd or self::tei:witStart][1][self::tei:witEnd]/@xml:id"/>
-        <xsl:variable name="lastBoudaryID"
+        <xsl:variable name="lastAnchorID"
             select="following::node()[self::tei:witEnd or self::tei:witStart][1][self::tei:witStart]/@xml:id"/>
         <xsl:choose>
             <!--Dans ce cas, on ne fait rien, car c'est géré par une autre template (noeuds textuels entre witEnd et witStart matchant les mêmes témoins-->
             <xsl:when
-                test="$precedingWitEnd and $followingWitStart and $firstBourdaryCorresps = $lastBoudaryCorresps"/>
+                test="$precedingWitEnd and $followingWitStart and $firstAnchorCorresps = $lastAnchorCorresps"/>
             <!--Dans ce cas, on ne fait rien, car c'est géré par une autre template-->
             <xsl:otherwise>
                 <!--Sinon, on va chercher la template qui a été non appliquée par le jeu des priorités, càd la template plus spécifique: https://stackoverflow.com/a/19316980-->
@@ -477,8 +479,6 @@
             select="descendant::tei:rdg[contains(translate(@wit, '#', ''), $temoin_courant)]"
             mode="citation_apparat"/>
         <xsl:text>}{\Dfootnote{</xsl:text>
-        <!-- test: UNCLEAR entre crochets avec un ?-->
-        <!--Ici il faut ajouter un omm. dans l'apparat sans que ça se voie dans le corps du texte.-->
         <xsl:text>\textit{</xsl:text>
         <!--Pour chaque témoin, ne faire apparaître que la lettre correspondante-->
         <xsl:choose>
@@ -518,7 +518,7 @@
                             </xsl:if>
                         </xsl:for-each>
                     </xsl:variable>
-                    <xsl:apply-templates select="tei:rdg[1]" mode="citation_apparat"/>
+                    <xsl:apply-templates select="tei:rdg[1]" mode="rdg_apparat"/>
                     <xsl:text>\,\textit{</xsl:text>
                     <xsl:value-of select="$grouped_sigla"/>
                     <xsl:text>}\,</xsl:text>
@@ -527,7 +527,7 @@
             <xsl:otherwise>
                 <xsl:for-each select="tei:rdg[not(contains(translate(@wit, '#', ''), $temoin_courant))]">
                     <xsl:variable name="sigle_temoin" select="chezmoi:witstosigla(@wit)"/>
-                    <xsl:apply-templates select="." mode="citation_apparat"/>
+                    <xsl:apply-templates select="." mode="rdg_apparat"/>
                     <xsl:text>\,\textit{</xsl:text>
                     <xsl:value-of select="$sigle_temoin"/>
                     <xsl:text>}\,</xsl:text>
@@ -537,11 +537,34 @@
         <xsl:text>}}</xsl:text>
     </xsl:template>
 
+    <xsl:template match="tei:rdg" mode="rdg_apparat">
+        <xsl:choose>
+            <xsl:when test="tei:w">
+                <xsl:apply-templates/>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:text>\textit{om.} </xsl:text>
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:template>
+
     <xsl:template match="tei:w" mode="citation_apparat">
         <xsl:if test="not(parent::tei:del[count(descendant::tei:w) = 1])">
             <xsl:text> </xsl:text>
         </xsl:if>
-        <xsl:apply-templates mode="citation_apparat"/>
+        <xsl:variable name="current_position" select="count(preceding::tei:w)"/>
+        <xsl:variable name="same_word_around"
+            select="preceding::tei:w[($current_position - 10) > count(preceding::tei:w) and not(count(preceding::tei:w) > $current_position + 10)]/text() = text()"/>
+        <xsl:choose>
+            <xsl:when test="$same_word_around">
+                <xsl:text>\sameword{</xsl:text>
+                <xsl:apply-templates mode="citation_apparat"/>
+                <xsl:text>}</xsl:text>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:apply-templates mode="citation_apparat"/>
+            </xsl:otherwise>
+        </xsl:choose>
         <xsl:choose>
             <xsl:when test="following::tei:pc[1]"/>
             <xsl:otherwise> </xsl:otherwise>
@@ -559,11 +582,25 @@
         </xsl:for-each>
     </xsl:function>
 
-    <xsl:template match="tei:w" mode="apparat">
+    <xsl:template match="tei:w" mode="#all" priority="4">
         <xsl:if test="not(parent::tei:del[count(descendant::tei:w) = 1])">
             <xsl:text> </xsl:text>
         </xsl:if>
-        <xsl:apply-templates mode="apparat"/>
+        <xsl:variable name="current_position" select="count(preceding::tei:w)"/>
+        <xsl:variable name="same_word_before"
+            select="preceding::tei:w[($current_position - 10) > count(preceding::tei:w) and not(count(preceding::tei:w) > $current_position)]/text() = text()"/>
+        <xsl:variable name="same_word_after"
+            select="following::tei:w[($current_position + 10) > count(preceding::tei:w)][count(preceding::tei:w) > $current_position]/text() = text()"/>
+        <xsl:choose>
+            <xsl:when test="$same_word_before or $same_word_after">
+                <xsl:text>\sameword{</xsl:text>
+                <xsl:apply-templates mode="citation_apparat"/>
+                <xsl:text>}</xsl:text>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:apply-templates mode="citation_apparat"/>
+            </xsl:otherwise>
+        </xsl:choose>
         <xsl:choose>
             <xsl:when test="following::tei:pc[1]"/>
             <xsl:otherwise> </xsl:otherwise>
