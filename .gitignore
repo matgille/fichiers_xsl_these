@@ -1,4 +1,8 @@
-*.bib  
+*.bib
+.idea/
+.tmp/
+tex/
+venv/  
 these.tex  
 extraction_exemples_glose.tex
 sommaire_graphique_edition.tex
