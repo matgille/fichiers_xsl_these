@@ -1,8 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
     xmlns:tei="http://www.tei-c.org/ns/1.0" xmlns:chezmoi="https://www.matthiasgillelevenson.fr/ns/1.0"
-    xmlns:tex="placeholder.uri" exclude-result-prefixes="tex">
+    xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:tex="placeholder.uri" exclude-result-prefixes="tex">
+
+
+
+    <!---->
+    <!---->
+    <!--CITATIONS AVEC APPARAT-->
+    <!---->
+    <!---->
+
+
+
+    <!---->
+    <!---->
+    <!--CITATIONS AVEC APPARAT-->
+    <!---->
+    <!---->
 
 
 
@@ -216,8 +231,44 @@
 
     <xsl:template match="tei:app[@ana = '#not_apparat']" mode="citation_omission_complexe">
         <xsl:apply-templates select="tei:rdg/tei:w"/>
-        <xsl:text> </xsl:text>
     </xsl:template>
+
+
+
+
+
+    <xsl:template
+        match="tei:app[@ana = '#graphique'][not(contains(@ana, '#omission'))] | tei:app[contains(@ana, '#filtre')][not(contains(@ana, '#omission'))][count(descendant::tei:rdg) = 1] | tei:app[contains(@ana, '#auxiliarite')][not(contains(@ana, '#omission'))]"
+        mode="citation_apparat">
+        <xsl:param name="temoin_courant"/>
+        <!--Ajouter un test sur la présence d'une note-->
+        <xsl:text> </xsl:text>
+        <!--Afficher ici la lecture du témoin courant, voir plus bas-->
+        <xsl:apply-templates select="tei:rdg[contains(translate(@wit, '#', ''), $temoin_courant)]"
+            mode="citation_apparat"/>
+    </xsl:template>
+
+
+    <xsl:template
+        match="tei:app[contains(@ana, '#filtre')][count(descendant::tei:rdg) > 1][not(contains(@ana, '#omission'))]"
+        mode="citation_apparat">
+        <xsl:param name="temoin_courant"/>
+        <xsl:apply-templates
+            select="descendant::tei:rdg[contains(translate(@wit, '#', ''), $temoin_courant)]"
+            mode="citation_apparat"/>
+    </xsl:template>
+
+    <xsl:template match="
+            tei:app[contains(@ana, '#lexicale')][count(descendant::tei:rdg) = 1]
+            | tei:app[contains(@ana, '#morphosyntactique')][count(descendant::tei:rdg) = 1]
+            | tei:app[contains(@ana, '#indetermine')][count(descendant::tei:rdg) = 1]"
+        mode="citation_apparat">
+        <!--Essayer de trouver un moyen de faire apparaître les omissions clairement. Par exemple: dans un niveau de note spécifique.-->
+        <!--On omet les omissions pour l'instant-->
+        <xsl:apply-templates mode="citation_apparat"/>
+    </xsl:template>
+
+
     <!--
 
     <xsl:template match="tei:rdg" mode="citation_omission_complexe">
@@ -281,7 +332,7 @@
         <xsl:choose>
             <!--Dans ce cas, on ne fait rien, car c'est géré par une autre template (noeuds textuels entre witEnd et witStart matchant les mêmes témoins-->
             <xsl:when
-                test="$precedingWitEnd and $followingWitStart and $firstAnchorCorresps = $lastAnchorCorresps"/>
+                test="$precedingWitEnd and $followingWitStart and $firstAnchorCorresps = $lastAnchorCorresps"> </xsl:when>
             <!--Dans ce cas, on ne fait rien, car c'est géré par une autre template-->
             <xsl:otherwise>
                 <!--Sinon, on va chercher la template qui a été non appliquée par le jeu des priorités, càd la template plus spécifique: https://stackoverflow.com/a/19316980-->
@@ -434,15 +485,17 @@
 
 
     <xsl:template match="tei:sic[not(@ana = '#omission')]" mode="citation_apparat">
-        <xsl:apply-templates/>
+        <xsl:apply-templates mode="citation_apparat"/>
         <xsl:text>\textsuperscript{\textit{[sic]}}</xsl:text>
     </xsl:template>
+
+
+
+
     <xsl:template
         match="tei:app[@ana = '#graphique'] | tei:app[@ana = '#filtre'][count(descendant::tei:rdg) = 1] | tei:app[@ana = '#auxiliarite']"
-        priority="1" mode="citation_apparat">
+        mode="citation_apparat" priority="1">
         <xsl:param name="temoin_courant"/>
-        <xsl:message>Variante graphique repérée</xsl:message>
-        <xsl:message select="$temoin_courant"/>
         <!--Ajouter un test sur la présence d'une note-->
         <xsl:text> </xsl:text>
         <!--Afficher ici la lecture du témoin courant, voir plus bas-->
@@ -465,7 +518,7 @@
             | tei:app[contains(@ana, '#indetermine')][count(descendant::tei:rdg) > 1]
             | tei:app[contains(@ana, '#personne')][count(descendant::tei:rdg) > 1]
             | tei:app[contains(@ana, '#genre')][count(descendant::tei:rdg) > 1]
-            " mode="citation_apparat" priority="1">
+            " mode="citation_apparat">
         <xsl:param name="temoin_courant"/>
         <xsl:text>% Variante de type </xsl:text>
         <xsl:value-of select="@ana"/>
@@ -541,7 +594,7 @@
     <xsl:template match="tei:rdg" mode="rdg_apparat">
         <xsl:choose>
             <xsl:when test="tei:w">
-                <xsl:apply-templates/>
+                <xsl:apply-templates mode="apparat"/>
             </xsl:when>
             <xsl:otherwise>
                 <xsl:text>\textit{om.} </xsl:text>
@@ -553,29 +606,75 @@
     <xsl:template match="tei:note" mode="citation_apparat"/>
 
 
+    <xsl:template match="tei:lb[@break = 'yes']" mode="citation_apparat">
+        <!--On va ignorer les lb-->
+        <xsl:text> </xsl:text>
+    </xsl:template>
+    
+    <xsl:template match="tei:witStart" mode="citation_apparat">
+        <xsl:text>\footnoteA{Le témoin </xsl:text>
+        <xsl:value-of select="chezmoi:witstosigla(@corresp)"/>
+        <xsl:text> reprend ici.}</xsl:text>
+    </xsl:template>
+    
+    <xsl:template match="tei:cb" mode="citation_apparat">
+        <xsl:text>[cb]</xsl:text>
+    </xsl:template>
+    
+    <xsl:template match="tei:space" mode="citation_apparat">
+        <xsl:text> </xsl:text>
+    </xsl:template>
+    
+    
+    
+    <xsl:template match="tei:add[@type = 'commentaire']" mode="citation_apparat">
+        <xsl:text>\footnoteA{Glose d'une main</xsl:text>
+        <xsl:choose>
+            <xsl:when test="@place = 'margin'">
+                <xsl:text> en marge</xsl:text>
+            </xsl:when>
+            <xsl:when test="@place = 'bottom'">
+                <xsl:text> en bas de page</xsl:text>
+            </xsl:when>
+            <xsl:when test="@place = 'inline'">
+                <xsl:text> en ligne</xsl:text>
+            </xsl:when>
+        </xsl:choose>
+        <xsl:text>: \enquote{</xsl:text>
+        <xsl:apply-templates/>
+        <xsl:text>}}</xsl:text>
+    </xsl:template>
+    
+    
+    <xsl:template match="tei:supplied" mode="citation_apparat">
+        <xsl:text>\textit{</xsl:text>
+        <xsl:apply-templates/>
+        <xsl:text>}</xsl:text>
+    </xsl:template>
 
+
+    <xsl:template match="tei:add[@type = 'correction']" mode="citation_apparat">
+        <xsl:text>[Correction d'une main:</xsl:text>
+        <xsl:apply-templates/>
+        <xsl:text>]</xsl:text>
+    </xsl:template>
 
     <xsl:template match="tei:w" mode="#all">
         <xsl:if test="not(parent::tei:del[count(descendant::tei:w) = 1])">
             <xsl:text> </xsl:text>
         </xsl:if>
-        <xsl:variable name="current_position" select="count(preceding::tei:w)"/>
-        <!--Ces deux variables vérifient que le mot n'est pas déjà présent dans un contexte de 10 [mots, pas apparats]-->
-        <xsl:variable name="same_word_before"
-            select="preceding::tei:w[($current_position - 10) > count(preceding::tei:w) and not(count(preceding::tei:w) > $current_position)]/text() = text()"/>
-        <xsl:variable name="same_word_after"
-            select="following::tei:w[($current_position + 10) > count(preceding::tei:w)][count(preceding::tei:w) > $current_position]/text() = text()"/>
-        <!--Ces deux variables vérifient que le mot n'est pas déjà présent dans un contexte de 10 [mots, pas apparats]-->
+        <xsl:variable name="preceding" as="xs:string*"
+            select="preceding-sibling::tei:app/descendant::tei:w[position() lt 11]/text()"/>
+        <xsl:variable name="following" as="xs:string*"
+            select="following-sibling::tei:app/descendant::tei:w[position() lt 11]/text()"/>
         <xsl:choose>
-            <xsl:when test="$same_word_before or $same_word_after">
-                <!--\sameword va permettre de désambiguiser les mots identiques sur la même ligne-->
+            <xsl:when test="text() = ($preceding, $following)">
                 <xsl:text>\sameword{</xsl:text>
-                <xsl:apply-templates mode="citation_apparat"/>
+                <xsl:apply-templates/>
                 <xsl:text>}</xsl:text>
-                <!--\sameword va permettre de désambiguiser les mots identiques sur la même ligne-->
             </xsl:when>
             <xsl:otherwise>
-                <xsl:apply-templates mode="citation_apparat"/>
+                <xsl:apply-templates/>
             </xsl:otherwise>
         </xsl:choose>
         <xsl:choose>

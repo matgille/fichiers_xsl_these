@@ -19,54 +19,11 @@ pourra modifier les espaces simplement (translate ou un autre truc) ainsi qu'ada
     <xsl:variable name="omission_binaire">
         <xsl:text>#omission #binary</xsl:text>
     </xsl:variable>
-
-
     <!--Variables concernant les omissions-->
 
-    <!--<xsl:variable name="temoin_courant" select="ancestor::tei:TEI[@type = 'transcription']/@xml:id"/>-->
 
 
 
-    <!-- <xsl:template match="/" mode="edition">
-        <!-\-<xsl:text>\textbf{Sigles des témoins}\newline\newline</xsl:text>
-        <xsl:for-each
-            select="/tei:TEI/tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:listWit/tei:witness">
-            <xsl:text>\noindent \textbf{</xsl:text>
-            <xsl:value-of select="@xml:id"/>
-            <xsl:text>}: </xsl:text>
-            <xsl:value-of select="text()"/>
-            <xsl:text>\newline </xsl:text>
-        </xsl:for-each>-\->
-        <xsl:text>
-            \documentclass[french,twoside,a4paper,12pt]{book}
-        </xsl:text>
-        <xsl:choose>
-            <xsl:when test="$fusion = 'True'">\input{../latex/preambule.tex}</xsl:when>
-            <!-\-Ça ne devrait pas marcher, bizarre.-\->
-            <xsl:otherwise>
-                <xsl:text>\input{latex/preambule.tex}</xsl:text>
-            </xsl:otherwise>
-        </xsl:choose>
-        <xsl:text>
-            \begin{document}
-            \setstretch{1,1}
-           <!-\- changes the default format of the linenumbers-\->
-            \setcounter{chapter}{
-        </xsl:text>
-        <xsl:value-of select="tei:div/@n"/>
-        <xsl:text>}</xsl:text>
-        <xsl:apply-templates mode="edition"/>
-        <xsl:text>
-        \end{document}</xsl:text>
-    </xsl:template>-->
-
-
-
-    <!--
-
-    <!-\-Revenir sur cette règle après attention qui nous fait perdre des notes !!!-\->
-    <xsl:template match="tei:note[parent::tei:head]" mode="edition"/>
-    <!-\-Revenir sur cette règle après attention qui nous fait perdre des notes !!!-\->-->
 
     <xsl:template match="tei:persName[@type = 'auteur']" mode="edition">
         <xsl:text>\textsc{</xsl:text>
@@ -122,6 +79,8 @@ pourra modifier les espaces simplement (translate ou un autre truc) ainsi qu'ada
     <!--Notes en bas de page. -->
     <!--Est ce que je me complique pas la vie à écrire deux fois les mêmes règles?-->
     <!--Si la note est thématique, second niveau de notes, appel en chiffres arabes-->
+
+
 
     <xsl:template
         match="tei:note[@subtype = 'lexicale'] | tei:note[@type = 'particulier'] | tei:note[@type = 'general'] | tei:note[@type = 'sources']"
@@ -212,37 +171,6 @@ pourra modifier les espaces simplement (translate ou un autre truc) ainsi qu'ada
     <!--TODO: Ajouter toutes les images en annexe-->
 
 
-    <!-- <xsl:template match="tei:graphic[parent::tei:note]" mode="edition">
-        <xsl:text>
-<!-\-https://tex.stackexchange.com/a/8633-\->
-        \begin{figure}[ht!]
-        \centering
-        \includegraphics[</xsl:text>
-        <xsl:if test="@scale">
-            <xsl:text>scale=</xsl:text>
-            <xsl:value-of select="@scale"/>
-        </xsl:if>
-        <xsl:if test="@crop">
-            <xsl:text>,trim={</xsl:text>
-            <xsl:value-of select="@crop"/>
-            <xsl:text>}, clip</xsl:text>
-        </xsl:if>
-        <xsl:text>]{</xsl:text>
-        <xsl:value-of select="replace(replace(@url, '_', '\\_'), '../../../', '')"/>
-        <xsl:text>}
-        \caption{</xsl:text>
-        <xsl:apply-templates select="tei:desc"/>
-        <xsl:text>}</xsl:text>
-        <xsl:if test="@xml:id">
-            <xsl:text>\label{</xsl:text>
-            <xsl:value-of select="@xml:id"/>
-            <xsl:text>}</xsl:text>
-        </xsl:if>
-        <xsl:text>
-        \end{figure}
-    </xsl:text>
-    </xsl:template>-->
-
 
     <xsl:template match="tei:sic[@ana = '#omission']" mode="edition">
         <xsl:apply-templates mode="edition"/>
@@ -273,7 +201,7 @@ pourra modifier les espaces simplement (translate ou un autre truc) ainsi qu'ada
     </xsl:template>
 
 
-    <xsl:template match="tei:lb[@break = 'y']" mode="edition">
+    <xsl:template match="tei:lb[@break = 'yes']" mode="edition">
         <xsl:text> </xsl:text>
     </xsl:template>
 
@@ -990,6 +918,11 @@ pourra modifier les espaces simplement (translate ou un autre truc) ainsi qu'ada
         <xsl:apply-templates mode="apparat"/>
     </xsl:template>
 
+
+    <xsl:template match="tei:app[@ana = '#not_apparat']" mode="edition">
+        <xsl:apply-templates mode="edition"/>
+    </xsl:template>
+
     <xsl:template match="
             tei:app[@ana = '#filtre'][count(descendant::tei:rdg) > 1]
             | tei:app[@ana = '#genre'][count(descendant::tei:rdg) > 1]" mode="edition">
@@ -1144,12 +1077,6 @@ pourra modifier les espaces simplement (translate ou un autre truc) ainsi qu'ada
         </xsl:if>
     </xsl:template>
 
-
-    <!--<xsl:template
-        match="tei:app[preceding::node()[self::tei:witEnd or self::tei:witStart][1][name() = 'witEnd']]" mode="edition"
-        mode="omission">
-        <xsl:apply-templates mode="edition"/>
-    </xsl:template>-->
 
 
 
@@ -1433,25 +1360,8 @@ pourra modifier les espaces simplement (translate ou un autre truc) ainsi qu'ada
 
     <xsl:template match="tei:lb" mode="omission_complexe edition"/>
 
-    <!--
-    <xsl:template match="tei:seg[@ana = '#transposition']" mode="edition">
-        <xsl:text> \edtext{</xsl:text>
-        <xsl:apply-templates
-            select="descendant::tei:rdg[contains(@wit, $temoin_courant)]/descendant::tei:w"/>
-        <xsl:text>}{\Dfootnote{[TRANSP] \textit{</xsl:text>
-        <xsl:value-of
-            select="chezmoi:witstosigla(descendant::tei:app[1]/descendant::tei:rdg[contains(@wit, $temoin_courant)]/@wit)"/>
-        <xsl:text>} | </xsl:text>
-        <!-\-On est dans le cas d'une inversion-\->
-        <xsl:apply-templates
-            select="descendant::tei:app/descendant::tei:rdg[not(contains(@wit, $temoin_courant)) or ancestor::tei:app[@ana = '#not_apparat']][1]/descendant::tei:w"/>
-        <xsl:text> \textit{</xsl:text>
-        <xsl:value-of
-            select="chezmoi:witstosigla(descendant::tei:app[last()]/descendant::tei:rdg[not(contains(@wit, $temoin_courant))]/@wit)"/>
-        <xsl:text>}}}</xsl:text>
-    </xsl:template>
 
--->
+
 
 
     <!--Règle principale sur les apparats-->
@@ -1668,7 +1578,6 @@ pourra modifier les espaces simplement (translate ou un autre truc) ainsi qu'ada
 
     <!--TODO: idée pour les omissions. Pour chaque début d'omission. aller chercher tous les witEnd qui ne suivent pas un witEnd; aller jusqu'au prochain witStart 
     appliquer toutes les règles. Puis on va chercher le suivant, et on applique les règles dans la même note, en indiquant: tel témoin continue l'omission; etc etc-->
-
 
 
     <xsl:template match="tei:div[@type = 'glose']" mode="edition">

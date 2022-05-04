@@ -1,4 +1,5 @@
 from lxml import etree
+import xml.etree.ElementTree as ET
 import subprocess
 import os
 import sys
@@ -41,7 +42,7 @@ def execute():
 
     for instruction in liste_instructions:
         base_document = \
-            instruction.xpath("ancestor::node()[self::tei:p[@xml:base] or self::tei:div[@xml:base]][1]/@xml:base",
+            instruction.xpath("ancestor::node()[self::tei:p[@xml:base] or self::tei:div[@xml:base]][1]/@xml:base | @xml:base",
                               namespaces=NSMAP)[0]
         try:
             base_document = instruction.xpath("@xml:base", namespaces=NSMAP)[0]
@@ -76,6 +77,10 @@ def execute():
 
     with open(".tmp/these_tmp.xml", "w") as output_these:
         output = etree.tostring(parsed_these, pretty_print=True, encoding='utf-8', xml_declaration=True).decode('utf8')
+        # Test pour gérer l'indentation du xml à imprimer tel quel: échec.
+        # element = ET.XML(output)
+        # ET.indent(element, level=2)
+        # output = ET.tostring(element, encoding='unicode')
         output_these.write(str(output))
 
 
