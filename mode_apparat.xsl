@@ -1,35 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-    xmlns:tei="http://www.tei-c.org/ns/1.0" xmlns:chezmoi="https://www.matthiasgillelevenson.fr/ns/1.0"
+    xmlns:tei="http://www.tei-c.org/ns/1.0"
+    xmlns:myfunctions="https://www.matthiasgillelevenson.fr/ns/1.0"
     xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:tex="placeholder.uri" exclude-result-prefixes="tex">
 
 
-
-    <!---->
-    <!---->
-    <!--CITATIONS AVEC APPARAT-->
-    <!---->
-    <!---->
+    <!--On rassemble deux modes ici: 
+    - citation apparat = le mode qui gère tout ce qui permet de rendre une citation avec (ou sans) apparat
+    - apparat = le mode qui gère le fonctionnement à l'intérieur d'un apparat-->
 
 
 
-    <!---->
-    <!---->
-    <!--CITATIONS AVEC APPARAT-->
-    <!---->
-    <!---->
-
-
-
-    <xsl:template match="tei:hi[@rend = 'initiale' or @rend = 'non_initiale']" mode="apparat">
+    <xsl:template match="tei:hi[@rend = 'initiale' or @rend = 'non_initiale']"
+        mode="apparat omission_simple">
         <xsl:value-of select="."/>
     </xsl:template>
 
 
-    <xsl:template match="tei:hi[@rend = 'lettre_attente']" mode="apparat"/>
+    <xsl:template match="tei:hi[@rend = 'lettre_attente']" mode="apparat omission_simple"/>
 
 
-    <xsl:template mode="apparat"
+    <xsl:template mode="apparat omission_simple"
         match="tei:note[@subtype = 'lexicale'][not(parent::tei:head)] | tei:note[@type = 'particulier'] | tei:note[@type = 'general'] | tei:note[@type = 'sources']">
         <xsl:text>\footnote</xsl:text>
         <xsl:choose>
@@ -75,7 +66,7 @@
         <xsl:variable name="division" select="ancestor::tei:div[not(ancestor::tei:div)]/@n"/>
         <xsl:variable name="corresponding_wit">
             <xsl:choose>
-                <xsl:when test="@injected">
+                <xsl:when test="@ana = '#injected'">
                     <xsl:value-of select="translate(@corresp, '#', '')"/>
                 </xsl:when>
                 <xsl:otherwise>
@@ -92,7 +83,7 @@
             }</xsl:text>
     </xsl:template>
 
-    <xsl:template match="tei:quote[@type = 'primaire']" mode="apparat">
+    <xsl:template match="tei:quote[@type = 'primaire']" mode="apparat omission_simple">
         <xsl:variable name="langue">
             <xsl:choose>
                 <xsl:when test="@xml:lang = 'lat'">latin</xsl:when>
@@ -150,14 +141,15 @@
 
     <!--On ignore les transposition simples: on va imprimer le texte du témoin courant-->
     <xsl:template match="tei:seg[@ana = '#transposition']" mode="citation_apparat">
-        <xsl:apply-templates select="descendant::tei:rdg[contains(@wit, $temoin_courant)]/tei:w"
+        <xsl:variable name="temoin_base_citation" select="myfunctions:base_witness(.)"/>
+        <xsl:apply-templates select="descendant::tei:rdg[contains(@wit, $temoin_base_citation)]/tei:w"
             mode="citation_apparat"/>
         <!--Incompatibilité avec les omissions, voir comment on gère le problème-->
     </xsl:template>
     <!--On ignore les transposition simples: on va imprimer le texte du témoin courant-->
 
-    <xsl:template match="tei:witEnd" mode="citation_apparat">
-        <xsl:param name="temoin_courant"/>
+    <!-- <xsl:template match="tei:witEnd" mode="citation_apparat">
+        <xsl:variable name="temoin_base_citation" select="myfunctions:base_witness(.)"/>
         <xsl:variable name="firstAnchorCorresps" select="@corresp"/>
         <xsl:variable name="lastAnchorCorresps"
             select="following::node()[self::tei:witEnd or self::tei:witStart][1][self::tei:witStart]/@corresp"/>
@@ -169,10 +161,10 @@
         <xsl:choose>
             <xsl:when test="$firstAnchorCorresps = $lastAnchorCorresps">
                 <xsl:choose>
-                    <!--Premier cas: le témoin courant n'omet pas le texte-->
-                    <xsl:when test="not(contains($firstAnchorCorresps, $temoin_courant))">
+                    <!-\-Premier cas: le témoin courant n'omet pas le texte-\->
+                    <xsl:when test="not(contains($firstAnchorCorresps, $temoin_base_citation))">
                         <xsl:text>\edtext{</xsl:text>
-                        <!--La transposition va poser problème ici dans les cas de suites d'apparats compliqués Passer dans l'@ana des tei:app la transposition.-->
+                        <!-\-La transposition va poser problème ici dans les cas de suites d'apparats compliqués Passer dans l'@ana des tei:app la transposition.-\->
                         <xsl:apply-templates
                             select="following::node()[following::node()[@xml:id = $lastAnchorID]][self::tei:app][not(ancestor::tei:seg[@ana = '#transposition'])]"
                             mode="citation_omission_complexe"/>
@@ -186,18 +178,18 @@
                             select="following::node()[following::node()[@xml:id = $lastAnchorID]][self::tei:app][last()]"
                             mode="citation_omission_complexe"/>
                         <xsl:text>}\Dfootnote{\,|\,\textit{om.} \textit{</xsl:text>
-                        <xsl:value-of select="chezmoi:witstosigla($firstAnchorCorresps)"/>
+                        <xsl:value-of select="myfunctions:witstosigla($firstAnchorCorresps)"/>
                         <xsl:text>}}}</xsl:text>
                     </xsl:when>
                     <xsl:otherwise>
                         <xsl:variable name="first_preceding_sibling"
-                            select="preceding::tei:app[1]/descendant::tei:rdg[contains(@wit, $temoin_courant)][node()]"/>
+                            select="preceding::tei:app[1]/descendant::tei:rdg[contains(@wit, $temoin_base_citation)][node()]"/>
                         <xsl:variable name="omitted_witnesses">
                             <xsl:choose>
                                 <xsl:when test="$first_preceding_sibling/ancestor::tei:rdgGrp">
                                     <xsl:for-each
-                                        select="$first_preceding_sibling/ancestor::tei:rdgGrp[descendant::tei:rdg[contains(translate(@wit, '#', ''), $temoin_courant)]]/descendant::tei:rdg">
-                                        <xsl:value-of select="chezmoi:witstosigla(@wit)"/>
+                                        select="$first_preceding_sibling/ancestor::tei:rdgGrp[descendant::tei:rdg[contains(@wit, $temoin_base_citation)]]/descendant::tei:rdg">
+                                        <xsl:value-of select="myfunctions:witstosigla(@wit)"/>
                                         <xsl:if test="following-sibling::tei:rdg">
                                             <xsl:text>`</xsl:text>
                                         </xsl:if>
@@ -205,7 +197,7 @@
                                 </xsl:when>
                                 <xsl:otherwise>
                                     <xsl:value-of
-                                        select="chezmoi:witstosigla($first_preceding_sibling/descendant::tei:rdg[contains(translate(@wit, '#', ''), $temoin_courant)]/@wit)"
+                                        select="myfunctions:witstosigla($first_preceding_sibling/descendant::tei:rdg[contains(@wit, $temoin_base_citation)]/@wit)"
                                     />
                                 </xsl:otherwise>
                             </xsl:choose>
@@ -223,59 +215,73 @@
                             mode="citation_omission_complexe"/>
                         <xsl:text>}}</xsl:text>
                     </xsl:otherwise>
-                    <!--Premier cas: le témoin courant n'omet pas le texte-->
+                    <!-\-Premier cas: le témoin courant n'omet pas le texte-\->
                 </xsl:choose>
             </xsl:when>
         </xsl:choose>
     </xsl:template>
+-->
 
-    <xsl:template match="tei:app[@ana = '#not_apparat']" mode="citation_omission_complexe">
-        <xsl:apply-templates select="tei:rdg/tei:w"/>
+
+
+    <xsl:template match="tei:app[@ana = '#not_apparat']"
+        mode="citation_apparat citation_omission_complexe apparat rdg_apparat omission_simple">
+        <xsl:variable name="temoin_base_citation" select="myfunctions:base_witness(.)"/>
+        <xsl:apply-templates select="descendant::tei:rdg[contains(@wit, $temoin_base_citation)]"
+            mode="citation_apparat"/>
+        <xsl:if
+            test="following::node()[1][self::tei:app[descendant::tei:rdg[contains(@wit, $temoin_base_citation)][node()]]]">
+            <xsl:text> % Not_apparat ici </xsl:text>
+            <xsl:value-of select="$temoin_base_citation"/>
+            <xsl:text>&#10;</xsl:text>
+        </xsl:if>
     </xsl:template>
-
 
 
 
 
     <xsl:template
-        match="tei:app[@ana = '#graphique'][not(contains(@ana, '#omission'))] | tei:app[contains(@ana, '#filtre')][not(contains(@ana, '#omission'))][count(descendant::tei:rdg) = 1] | tei:app[contains(@ana, '#auxiliarite')][not(contains(@ana, '#omission'))]"
+        match="tei:app[@ana = '#graphique'][not(contains(@ana, '#omission'))] | tei:app[contains(@ana, '#filtre')][not(contains(@ana, '#omission'))][count(descendant::tei:rdg) = 1] | tei:app[contains(@ana, '#auxiliarite')][not(contains(@ana, '#omission'))] | tei:app[contains(@ana, '#normalisation')][not(contains(@ana, '#omission'))]"
         mode="citation_apparat">
-        <xsl:param name="temoin_courant"/>
-        <!--Ajouter un test sur la présence d'une note-->
-        <xsl:text> </xsl:text>
-        <!--Afficher ici la lecture du témoin courant, voir plus bas-->
-        <xsl:apply-templates select="tei:rdg[contains(translate(@wit, '#', ''), $temoin_courant)]"
+        <xsl:variable name="temoin_base_citation" select="myfunctions:base_witness(.)"/>
+        <xsl:apply-templates select="descendant::tei:rdg[contains(@wit, $temoin_base_citation)]"
             mode="citation_apparat"/>
+        <xsl:if
+            test="following::node()[1][self::tei:app[descendant::tei:rdg[contains(@wit, $temoin_base_citation)][node()]]]">
+            <xsl:text> %</xsl:text>
+            <xsl:value-of select="$temoin_base_citation"/>
+            <xsl:text>&#10;</xsl:text>
+        </xsl:if>
     </xsl:template>
 
 
     <xsl:template
         match="tei:app[contains(@ana, '#filtre')][count(descendant::tei:rdg) > 1][not(contains(@ana, '#omission'))]"
         mode="citation_apparat">
-        <xsl:param name="temoin_courant"/>
-        <xsl:apply-templates
-            select="descendant::tei:rdg[contains(translate(@wit, '#', ''), $temoin_courant)]"
+        <xsl:variable name="temoin_base_citation" select="myfunctions:base_witness(.)"/>
+        <xsl:apply-templates select="descendant::tei:rdg[contains(@wit, $temoin_base_citation)]"
             mode="citation_apparat"/>
+        <xsl:if
+            test="following::node()[1][self::tei:app[descendant::tei:rdg[contains(@wit, $temoin_base_citation)][node()]]]">
+            <xsl:text> %&#10;</xsl:text>
+        </xsl:if>
     </xsl:template>
+
 
     <xsl:template match="
             tei:app[contains(@ana, '#lexicale')][count(descendant::tei:rdg) = 1]
             | tei:app[contains(@ana, '#morphosyntactique')][count(descendant::tei:rdg) = 1]
             | tei:app[contains(@ana, '#indetermine')][count(descendant::tei:rdg) = 1]"
         mode="citation_apparat">
-        <!--Essayer de trouver un moyen de faire apparaître les omissions clairement. Par exemple: dans un niveau de note spécifique.-->
-        <!--On omet les omissions pour l'instant-->
+        <xsl:variable name="temoin_base_citation" select="myfunctions:base_witness(.)"/>
+
         <xsl:apply-templates mode="citation_apparat"/>
+        <xsl:if
+            test="following::node()[1][self::tei:app[descendant::tei:rdg[contains(@wit, $temoin_base_citation)][node()]]]">
+            <xsl:text> %&#10;</xsl:text>
+        </xsl:if>
     </xsl:template>
 
-
-    <!--
-
-    <xsl:template match="tei:rdg" mode="citation_omission_complexe">
-        <xsl:text> % Ici un mot
-        </xsl:text>
-        <xsl:apply-templates select="tei:w"/>
-    </xsl:template>-->
 
     <xsl:template match="
             tei:app[contains(@ana, '#entite_nommee')][count(descendant::tei:rdg) > 1]
@@ -285,14 +291,15 @@
             | tei:app[contains(@ana, '#personne')][count(descendant::tei:rdg) > 1]
             | tei:app[contains(@ana, '#genre')][count(descendant::tei:rdg) > 1]"
         mode="citation_omission_complexe" priority="3">
+        <xsl:variable name="temoin_base_citation" select="myfunctions:base_witness(.)"/>
         <xsl:text>[ </xsl:text>
-        <xsl:apply-templates select="descendant::tei:rdg[contains(@wit, $temoin_courant)]"/>
+        <xsl:apply-templates select="descendant::tei:rdg[contains(@wit, $temoin_base_citation)]"/>
         <xsl:choose>
             <xsl:when test="tei:rdgGrp">
                 <xsl:variable name="grouped_sigla">
                     <xsl:for-each
-                        select="descendant::tei:rdgGrp[descendant::tei:rdg[contains(translate(@wit, '#', ''), $temoin_courant)]]/descendant::tei:rdg">
-                        <xsl:value-of select="chezmoi:witstosigla(@wit)"/>
+                        select="descendant::tei:rdgGrp[descendant::tei:rdg[contains(@wit, $temoin_base_citation)]]/descendant::tei:rdg">
+                        <xsl:value-of select="myfunctions:witstosigla(@wit)"/>
                         <xsl:if test="following-sibling::tei:rdg">
                             <xsl:text>`</xsl:text>
                         </xsl:if>
@@ -304,79 +311,132 @@
             </xsl:when>
         </xsl:choose>
         <xsl:text>]</xsl:text>
+        <xsl:if
+            test="following::node()[1][self::tei:app[descendant::tei:rdg[contains(@wit, $temoin_base_citation)][node()]]]">
+            <xsl:text> %&#10;</xsl:text>
+        </xsl:if>
     </xsl:template>
 
     <xsl:template
         match="tei:app[@ana = '#graphique'] | tei:app[@ana = '#filtre'][count(descendant::tei:rdg) = 1] | tei:app[@ana = '#auxiliarite']"
-        mode="citation_omission_complexe">
-        <xsl:apply-templates select="descendant::tei:rdg[contains(@wit, $temoin_courant)]"/>
+        mode="citation_omission_complexe citation_apparat">
+        <xsl:variable name="temoin_base_citation" select="myfunctions:base_witness(.)"/>
+        <xsl:apply-templates select="descendant::tei:rdg[contains(@wit, $temoin_base_citation)]"/>
+        <xsl:if
+            test="following::node()[1][self::tei:app[descendant::tei:rdg[contains(@wit, $temoin_base_citation)][node()]]]">
+            <xsl:text> % témoin base 2: </xsl:text>
+            <xsl:value-of select="$temoin_base_citation"/>
+            <xsl:text>&#10;</xsl:text>
+        </xsl:if>
     </xsl:template>
 
 
-    <xsl:template match="tei:app" priority="2" mode="citation_apparat">
-        <!--On crée cette règle qui a la plus grande priorité: on va d'abord aller regarder si le tei:app est entre
-        deux ancres tei:witEnd et tei:witStart, pour s'occuper de l'omission.-->
-        <xsl:param name="temoin_courant"/>
-        <xsl:variable name="precedingWitEnd"
-            select="boolean(preceding::node()[self::tei:witEnd or self::tei:witStart][1][self::tei:witEnd])"/>
-        <xsl:variable name="followingWitStart"
-            select="boolean(following::node()[self::tei:witEnd or self::tei:witStart][1][self::tei:witStart])"/>
-        <xsl:variable name="firstAnchorCorresps"
-            select="preceding::node()[self::tei:witEnd or self::tei:witStart][1][self::tei:witEnd]/@corresp"/>
-        <xsl:variable name="lastAnchorCorresps"
-            select="following::node()[self::tei:witEnd or self::tei:witStart][1][self::tei:witStart]/@corresp"/>
-        <xsl:variable name="firstAnchorID"
-            select="preceding::node()[self::tei:witEnd or self::tei:witStart][1][self::tei:witEnd]/@xml:id"/>
-        <xsl:variable name="lastAnchorID"
-            select="following::node()[self::tei:witEnd or self::tei:witStart][1][self::tei:witStart]/@xml:id"/>
+    <xsl:template
+        match="tei:app[contains(@ana, '#omission')][contains(@ana, '#filtre') or contains(@ana, '#normalisation')]"
+        priority="1" mode="citation_apparat">
+        <!--Filtre avec omission: on imprime l'omission et tous les témoins regroupés sans tenir compte des apparats-->
+        <xsl:variable name="temoin_base_citation" select="myfunctions:base_witness(.)"/>
         <xsl:choose>
-            <!--Dans ce cas, on ne fait rien, car c'est géré par une autre template (noeuds textuels entre witEnd et witStart matchant les mêmes témoins-->
+            <!--Quand le témoin courant n'est pas omis-->
             <xsl:when
-                test="$precedingWitEnd and $followingWitStart and $firstAnchorCorresps = $lastAnchorCorresps"> </xsl:when>
-            <!--Dans ce cas, on ne fait rien, car c'est géré par une autre template-->
+                test="descendant::tei:rdg[contains(@wit, $temoin_base_citation)][descendant::tei:w]">
+                <xsl:text> % Omission avec variante filtrée ici, témoin courant présent 
+                </xsl:text>
+                <xsl:variable name="grouped_sigla">
+                    <xsl:for-each
+                        select="descendant::tei:rdgGrp[descendant::tei:rdg[descendant::tei:w]]/descendant::tei:rdg">
+                        <xsl:value-of select="myfunctions:witstosigla(@wit)"/>
+                    </xsl:for-each>
+                </xsl:variable>
+                <xsl:variable name="sigle" select="substring-after($temoin_base_citation, '_')"/>
+                <xsl:text>\edtext{</xsl:text>
+                <xsl:apply-templates select="descendant::tei:rdg[contains(@wit, $temoin_base_citation)]"
+                    mode="citation_apparat"/>
+                <xsl:text>}{\Dfootnote{\textit{</xsl:text>
+                <xsl:value-of select="$grouped_sigla"/>
+                <xsl:text>}\,|\,</xsl:text>
+                <xsl:text>\textit{om.} \textit{</xsl:text>
+                <xsl:value-of
+                    select="myfunctions:witstosigla(descendant::tei:rdg[not(descendant::tei:w)]/@wit)"/>
+                <xsl:text>}}}</xsl:text>
+            </xsl:when>
+            <!--Quand le témoin courant est omis-->
+
+            <!--Si le témoin courant est omis-->
             <xsl:otherwise>
-                <!--Sinon, on va chercher la template qui a été non appliquée par le jeu des priorités, càd la template plus spécifique: https://stackoverflow.com/a/19316980-->
-                <xsl:next-match>
-                    <xsl:with-param name="temoin_courant" select="$temoin_courant"/>
-                </xsl:next-match>
-                <!--Sinon, on va chercher la template qui a été non appliquée par le jeu des priorités-->
+                <xsl:text> % Omission binaire ici, témoin courant omis 
+                </xsl:text>
+                <xsl:variable name="preceding_omitted_lemma">
+                    <xsl:choose>
+                        <xsl:when
+                            test="preceding-sibling::node()[self::tei:app[descendant::tei:rdg[contains(@wit, $temoin_base_citation)][node()]] | self::tei:w][1]/name() = 'app'">
+                            <xsl:apply-templates
+                                select="preceding-sibling::node()[self::tei:app][descendant::tei:rdg[contains(@wit, $temoin_base_citation)][node()]][1]/descendant::tei:rdg[contains(@wit, $temoin_base_citation)]/tei:w"
+                                mode="apparat"/>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <xsl:apply-templates select="preceding-sibling::node()[self::tei:w][1]"
+                                mode="apparat"/>
+                        </xsl:otherwise>
+                    </xsl:choose>
+                </xsl:variable>
+                <xsl:text> </xsl:text>
+                <xsl:variable name="sigle" select="substring-after($temoin_base_citation, '_')"/>
+                <xsl:text>\edtext{</xsl:text>
+                <xsl:text>}{\lemma{</xsl:text>
+                <xsl:value-of select="$preceding_omitted_lemma"/>
+                <xsl:text>}\Dfootnote{| </xsl:text>
+                <xsl:value-of select="$preceding_omitted_lemma"/>
+                <xsl:text> </xsl:text>
+                <xsl:apply-templates
+                    select="descendant::tei:rdg[not(contains(@wit, $temoin_base_citation))]"/>
+                <xsl:text> \textit{</xsl:text>
+                <xsl:value-of
+                    select="myfunctions:witstosigla(descendant::tei:rdg[not(contains(@wit, $temoin_base_citation))]/@wit)"/>
+                <xsl:text>}</xsl:text>
+                <xsl:text>}}</xsl:text>
             </xsl:otherwise>
         </xsl:choose>
+        <xsl:if
+            test="following::node()[1][self::tei:app[descendant::tei:rdg[contains(@wit, $temoin_base_citation)][node()]]]">
+            <xsl:text> % témoin base: </xsl:text>
+            <xsl:value-of select="$temoin_base_citation"/>
+            <xsl:text>&#10;</xsl:text>
+        </xsl:if>
     </xsl:template>
+
 
 
     <xsl:template match="tei:app[contains(@ana, '#omission')][contains(@ana, '#graphique')]" priority="1"
         mode="citation_apparat">
         <!--Si #omission est la seule valeur de l'analyse, alors il s'agit d'une omission binaire (un témoin ou un groupe omet du texte;
         les autres témoins concordent complètement)-->
-        <xsl:param name="temoin_courant"/>
+        <xsl:variable name="temoin_base_citation" select="myfunctions:base_witness(.)"/>
         <xsl:choose>
             <!--Quand le témoin courant n'est pas omis-->
-            <xsl:when
-                test="descendant::tei:rdg[contains(translate(@wit, '#', ''), $temoin_courant)][tei:w]">
+            <xsl:when test="descendant::tei:rdg[contains(@wit, $temoin_base_citation)][tei:w]">
                 <xsl:text> % Omission avec variante graphique ici, témoin courant présent 
                 </xsl:text>
                 <xsl:variable name="grouped_sigla">
                     <xsl:for-each
-                        select="descendant::tei:rdgGrp[contains(translate(string-join(tei:rdg/@wit), '#', ''), $temoin_courant)]">
+                        select="descendant::tei:rdgGrp[contains(translate(string-join(tei:rdg/@wit), '#', ''), $temoin_base_citation)]">
                         <xsl:for-each select="descendant::tei:rdg">
-                            <xsl:value-of select="chezmoi:witstosigla(@wit)"/>
+                            <xsl:value-of select="myfunctions:witstosigla(@wit)"/>
                             <xsl:if test="following-sibling::tei:rdg">
                                 <xsl:text>`</xsl:text>
                             </xsl:if>
                         </xsl:for-each>
                     </xsl:for-each>
                 </xsl:variable>
-                <xsl:variable name="sigle" select="substring-after($temoin_courant, '_')"/>
-                <xsl:text> \edtext{</xsl:text>
-                <xsl:apply-templates
-                    select="descendant::tei:rdg[contains(translate(@wit, '#', ''), $temoin_courant)]"
+                <xsl:variable name="sigle" select="substring-after($temoin_base_citation, '_')"/>
+                <xsl:text>\edtext{</xsl:text>
+                <xsl:apply-templates select="descendant::tei:rdg[contains(@wit, $temoin_base_citation)]"
                     mode="citation_apparat"/>
                 <xsl:text>}{\Dfootnote{\textit{</xsl:text>
                 <xsl:value-of select="$grouped_sigla"/>
                 <xsl:text>}\,|\,</xsl:text>
                 <xsl:text>\textit{om.} \textit{</xsl:text>
-                <xsl:value-of select="chezmoi:witstosigla(descendant::tei:rdg[not(tei:w)]/@wit)"/>
+                <xsl:value-of select="myfunctions:witstosigla(descendant::tei:rdg[not(tei:w)]/@wit)"/>
                 <xsl:text>}}}</xsl:text>
             </xsl:when>
             <!--Quand le témoin courant est omis-->
@@ -388,9 +448,9 @@
                 <xsl:variable name="preceding_omitted_lemma">
                     <xsl:choose>
                         <xsl:when
-                            test="preceding-sibling::node()[self::tei:app[descendant::tei:rdg[contains(@wit, $temoin_courant)][node()]] | self::tei:w][1]/name() = 'app'">
+                            test="preceding-sibling::node()[self::tei:app[descendant::tei:rdg[contains(@wit, $temoin_base_citation)][node()]] | self::tei:w][1]/name() = 'app'">
                             <xsl:apply-templates
-                                select="preceding-sibling::node()[self::tei:app][descendant::tei:rdg[contains(@wit, $temoin_courant)][node()]][1]/descendant::tei:rdg[contains(@wit, $temoin_courant)]/tei:w"
+                                select="preceding-sibling::node()[self::tei:app][descendant::tei:rdg[contains(@wit, $temoin_base_citation)][node()]][1]/descendant::tei:rdg[contains(@wit, $temoin_base_citation)]/tei:w"
                                 mode="apparat"/>
                         </xsl:when>
                         <xsl:otherwise>
@@ -400,45 +460,49 @@
                     </xsl:choose>
                 </xsl:variable>
                 <xsl:text> </xsl:text>
-                <xsl:variable name="sigle" select="substring-after($temoin_courant, '_')"/>
-                <xsl:text> \edtext{</xsl:text>
-                <xsl:apply-templates
-                    select="descendant::tei:rdg[contains(translate(@wit, '#', ''), $temoin_courant)]"
-                    mode="citation_apparat"/>
+                <xsl:variable name="sigle" select="substring-after($temoin_base_citation, '_')"/>
+                <xsl:text>\edtext{</xsl:text>
                 <xsl:text>}{\lemma{</xsl:text>
                 <xsl:value-of select="$preceding_omitted_lemma"/>
                 <xsl:text>}\Dfootnote{| </xsl:text>
                 <xsl:value-of select="$preceding_omitted_lemma"/>
                 <xsl:text> </xsl:text>
                 <xsl:apply-templates
-                    select="descendant::tei:rdg[not(contains(translate(@wit, '#', ''), $temoin_courant))]"/>
+                    select="descendant::tei:rdg[not(contains(@wit, $temoin_base_citation))]"/>
                 <xsl:text> \textit{</xsl:text>
                 <xsl:value-of
-                    select="chezmoi:witstosigla(descendant::tei:rdg[not(contains(translate(@wit, '#', ''), $temoin_courant))]/@wit)"/>
+                    select="myfunctions:witstosigla(descendant::tei:rdg[not(contains(@wit, $temoin_base_citation))]/@wit)"/>
                 <xsl:text>}</xsl:text>
                 <xsl:text>}}</xsl:text>
             </xsl:otherwise>
         </xsl:choose>
+        <xsl:if
+            test="following::node()[1][self::tei:app[descendant::tei:rdg[contains(@wit, $temoin_base_citation)][node()]]]">
+            <xsl:text> % témoin base: </xsl:text>
+            <xsl:value-of select="$temoin_base_citation"/>
+            <xsl:text>&#10;</xsl:text>
+        </xsl:if>
     </xsl:template>
 
     <xsl:template match="tei:app[@ana = '#omission']" mode="citation_apparat" priority="1">
         <!--Si #omission est la seule valeur de l'analyse, alors il s'agit d'une omission binaire (un témoin ou un groupe omet du texte;
         les autres témoins concordent complètement)-->
-        <xsl:param name="temoin_courant"/>
+        <xsl:variable name="temoin_base_citation" select="myfunctions:base_witness(.)"/>
         <xsl:choose>
             <!--Quand le témoin courant n'est pas omis-->
             <xsl:when
-                test="descendant::tei:rdg[contains(translate(@wit, '#', ''), $temoin_courant)][tei:w]">
+                test="descendant::tei:rdg[contains(@wit, $temoin_base_citation)][descendant::tei:w]">
                 <xsl:text> % Omission binaire ici, témoin courant présent 
                 </xsl:text>
-                <xsl:variable name="sigle" select="substring-after($temoin_courant, '_')"/>
-                <xsl:text> \edtext{</xsl:text>
-                <xsl:apply-templates select="descendant::tei:rdg[tei:w]" mode="citation_apparat"/>
+                <xsl:variable name="sigle" select="substring-after($temoin_base_citation, '_')"/>
+                <xsl:text>\edtext{</xsl:text>
+                <xsl:apply-templates select="descendant::tei:rdg[contains(@wit, $temoin_base_citation)]"
+                    mode="citation_apparat"/>
                 <xsl:text>}{\Dfootnote{\textit{</xsl:text>
-                <xsl:value-of select="chezmoi:witstosigla(descendant::tei:rdg[tei:w]/@wit)"/>
+                <xsl:value-of select="myfunctions:witstosigla(descendant::tei:rdg[tei:w]/@wit)"/>
                 <xsl:text>}\,|\,</xsl:text>
                 <xsl:text>\textit{om.} \textit{</xsl:text>
-                <xsl:value-of select="chezmoi:witstosigla(descendant::tei:rdg[not(tei:w)]/@wit)"/>
+                <xsl:value-of select="myfunctions:witstosigla(descendant::tei:rdg[not(tei:w)]/@wit)"/>
                 <xsl:text>}}}</xsl:text>
             </xsl:when>
             <!--Quand le témoin courant est omis-->
@@ -450,9 +514,9 @@
                 <xsl:variable name="preceding_omitted_lemma">
                     <xsl:choose>
                         <xsl:when
-                            test="preceding-sibling::node()[self::tei:app[descendant::tei:rdg[contains(@wit, $temoin_courant)][node()]] | self::tei:w][1]/name() = 'app'">
+                            test="preceding-sibling::node()[self::tei:app[descendant::tei:rdg[contains(@wit, $temoin_base_citation)][node()]] | self::tei:w][1]/name() = 'app'">
                             <xsl:apply-templates
-                                select="preceding-sibling::node()[self::tei:app][descendant::tei:rdg[contains(@wit, $temoin_courant)][node()]][1]/descendant::tei:rdg[contains(@wit, $temoin_courant)]/tei:w"
+                                select="preceding-sibling::node()[self::tei:app][descendant::tei:rdg[contains(@wit, $temoin_base_citation)][node()]][1]/descendant::tei:rdg[contains(@wit, $temoin_base_citation)]/tei:w"
                                 mode="apparat"/>
                         </xsl:when>
                         <xsl:otherwise>
@@ -462,25 +526,26 @@
                     </xsl:choose>
                 </xsl:variable>
                 <xsl:text> </xsl:text>
-                <xsl:variable name="sigle" select="substring-after($temoin_courant, '_')"/>
-                <xsl:text> \edtext{</xsl:text>
-                <xsl:apply-templates
-                    select="descendant::tei:rdg[contains(translate(@wit, '#', ''), $temoin_courant)]"
-                    mode="citation_apparat"/>
+                <xsl:variable name="sigle" select="substring-after($temoin_base_citation, '_')"/>
+                <xsl:text>\edtext{</xsl:text>
                 <xsl:text>}{\lemma{</xsl:text>
                 <xsl:value-of select="$preceding_omitted_lemma"/>
                 <xsl:text>}\Dfootnote{| </xsl:text>
                 <xsl:value-of select="$preceding_omitted_lemma"/>
                 <xsl:text> </xsl:text>
                 <xsl:apply-templates
-                    select="descendant::tei:rdg[not(contains(translate(@wit, '#', ''), $temoin_courant))]"/>
+                    select="descendant::tei:rdg[not(contains(@wit, $temoin_base_citation))]"/>
                 <xsl:text> \textit{</xsl:text>
                 <xsl:value-of
-                    select="chezmoi:witstosigla(descendant::tei:rdg[not(contains(translate(@wit, '#', ''), $temoin_courant))]/@wit)"/>
+                    select="myfunctions:witstosigla(descendant::tei:rdg[not(contains(@wit, $temoin_base_citation))]/@wit)"/>
                 <xsl:text>}</xsl:text>
                 <xsl:text>}}</xsl:text>
             </xsl:otherwise>
         </xsl:choose>
+        <xsl:if
+            test="following::node()[1][self::tei:app[descendant::tei:rdg[contains(@wit, $temoin_base_citation)][node()]]]">
+            <xsl:text> %&#10;</xsl:text>
+        </xsl:if>
     </xsl:template>
 
 
@@ -495,18 +560,19 @@
     <xsl:template
         match="tei:app[@ana = '#graphique'] | tei:app[@ana = '#filtre'][count(descendant::tei:rdg) = 1] | tei:app[@ana = '#auxiliarite']"
         mode="citation_apparat" priority="1">
-        <xsl:param name="temoin_courant"/>
-        <!--Ajouter un test sur la présence d'une note-->
-        <xsl:text> </xsl:text>
-        <!--Afficher ici la lecture du témoin courant, voir plus bas-->
-        <xsl:apply-templates
-            select="descendant::tei:rdg[contains(translate(@wit, '#', ''), $temoin_courant)]"
+        <xsl:variable name="temoin_base_citation" select="myfunctions:base_witness(.)"/>
+        <xsl:text> %TEST&#10;</xsl:text>
+        <xsl:apply-templates select="descendant::tei:rdg[contains(@wit, $temoin_base_citation)]"
             mode="citation_apparat"/>
-        <xsl:if
-            test="descendant::tei:note[not(ancestor::tei:rdg[contains(translate(@wit, '#', ''), $temoin_courant)])]">
+        <!--<xsl:if
+            test="descendant::tei:note[not(ancestor::tei:rdg[contains(@wit, $temoin_base_citation)]])]">
             <xsl:apply-templates
-                select="descendant::tei:note[not(ancestor::tei:rdg[contains(translate(@wit, '#', ''), $temoin_courant)])]"
+                select="descendant::tei:note[not(ancestor::tei:rdg[contains(@wit, $temoin_base_citation)]])]"
                 mode="citation_apparat"/>
+        </xsl:if>-->
+        <xsl:if
+            test="following::node()[1][self::tei:app[descendant::tei:rdg[contains(@wit, $temoin_base_citation)][node()]]]">
+            <xsl:text> %TEST&#10;</xsl:text>
         </xsl:if>
     </xsl:template>
 
@@ -519,18 +585,17 @@
             | tei:app[contains(@ana, '#personne')][count(descendant::tei:rdg) > 1]
             | tei:app[contains(@ana, '#genre')][count(descendant::tei:rdg) > 1]
             " mode="citation_apparat">
-        <xsl:param name="temoin_courant"/>
+        <xsl:variable name="temoin_base_citation" select="myfunctions:base_witness(.)"/>
         <xsl:text>% Variante de type </xsl:text>
         <xsl:value-of select="@ana"/>
         <xsl:text>; témoin courant: </xsl:text>
-        <xsl:value-of select="$temoin_courant"/>
+        <xsl:value-of select="$temoin_base_citation"/>
         <xsl:text>
         </xsl:text>
         <xsl:text> </xsl:text>
-        <xsl:variable name="temoin_courant2" select="substring-after($temoin_courant, '_')"/>
-        <xsl:text> \edtext{</xsl:text>
-        <xsl:apply-templates
-            select="descendant::tei:rdg[contains(translate(@wit, '#', ''), $temoin_courant)]"
+        <xsl:variable name="temoin_base_citation2" select="substring-after($temoin_base_citation, '_')"/>
+        <xsl:text>\edtext{</xsl:text>
+        <xsl:apply-templates select="descendant::tei:rdg[contains(@wit, $temoin_base_citation)]"
             mode="citation_apparat"/>
         <xsl:text>}{\Dfootnote{</xsl:text>
         <xsl:text>\textit{</xsl:text>
@@ -538,11 +603,11 @@
         <xsl:choose>
             <!--S'il y a un rdgGrp (= si d'autres leçons sont identiques modulo variation graphique à la leçon base)-->
             <xsl:when
-                test="descendant::tei:rdgGrp[descendant::tei:rdg[contains(translate(@wit, '#', ''), $temoin_courant)]]">
+                test="descendant::tei:rdgGrp[descendant::tei:rdg[contains(@wit, $temoin_base_citation)]]">
                 <xsl:variable name="grouped_sigla">
                     <xsl:for-each
-                        select="descendant::tei:rdgGrp[descendant::tei:rdg[contains(translate(@wit, '#', ''), $temoin_courant)]]/descendant::tei:rdg">
-                        <xsl:value-of select="chezmoi:witstosigla(@wit)"/>
+                        select="descendant::tei:rdgGrp[descendant::tei:rdg[contains(@wit, $temoin_base_citation)]]/descendant::tei:rdg">
+                        <xsl:value-of select="myfunctions:witstosigla(@wit)"/>
                         <xsl:if test="following-sibling::tei:rdg">
                             <xsl:text>`</xsl:text>
                         </xsl:if>
@@ -553,7 +618,7 @@
             <!--S'il y a un rdgGrp (= si d'autres leçons sont identiques modulo variation graphique à la leçon base)-->
             <xsl:otherwise>
                 <xsl:value-of
-                    select="chezmoi:witstosigla(tei:rdg[contains(translate(@wit, '#', ''), $temoin_courant)]/@wit)"
+                    select="myfunctions:witstosigla(tei:rdg[contains(@wit, $temoin_base_citation)]/@wit)"
                 />
             </xsl:otherwise>
         </xsl:choose>
@@ -563,10 +628,10 @@
         <xsl:choose>
             <xsl:when test="descendant::tei:rdgGrp">
                 <xsl:for-each
-                    select="descendant::tei:rdgGrp[not(descendant::tei:rdg[contains(translate(@wit, '#', ''), $temoin_courant)])]">
+                    select="descendant::tei:rdgGrp[not(descendant::tei:rdg[contains(@wit, $temoin_base_citation)])]">
                     <xsl:variable name="grouped_sigla">
                         <xsl:for-each select="descendant::tei:rdg">
-                            <xsl:value-of select="chezmoi:witstosigla(@wit)"/>
+                            <xsl:value-of select="myfunctions:witstosigla(@wit)"/>
                             <xsl:if test="following-sibling::tei:rdg">
                                 <xsl:text>`</xsl:text>
                             </xsl:if>
@@ -579,8 +644,8 @@
                 </xsl:for-each>
             </xsl:when>
             <xsl:otherwise>
-                <xsl:for-each select="tei:rdg[not(contains(translate(@wit, '#', ''), $temoin_courant))]">
-                    <xsl:variable name="sigle_temoin" select="chezmoi:witstosigla(@wit)"/>
+                <xsl:for-each select="tei:rdg[not(contains(@wit, $temoin_base_citation))]">
+                    <xsl:variable name="sigle_temoin" select="myfunctions:witstosigla(@wit)"/>
                     <xsl:apply-templates select="." mode="rdg_apparat"/>
                     <xsl:text>\,\textit{</xsl:text>
                     <xsl:value-of select="$sigle_temoin"/>
@@ -589,18 +654,61 @@
             </xsl:otherwise>
         </xsl:choose>
         <xsl:text>}}</xsl:text>
+        <xsl:if
+            test="following::node()[1][self::tei:app[descendant::tei:rdg[contains(@wit, $temoin_base_citation)][node()]]]">
+            <xsl:text> %&#10;</xsl:text>
+        </xsl:if>
     </xsl:template>
 
+
     <xsl:template match="tei:rdg" mode="rdg_apparat">
+        <xsl:param name="temoin_base_edition"/>
+        <xsl:text>%temoin base rdg apparat:</xsl:text>
+        <xsl:value-of select="$temoin_base_edition"/>
+        <xsl:text>&#10;</xsl:text>
         <xsl:choose>
             <xsl:when test="tei:w">
                 <xsl:apply-templates mode="apparat"/>
             </xsl:when>
             <xsl:otherwise>
-                <xsl:text>\textit{om.} </xsl:text>
+                <xsl:text>\textit{om.}</xsl:text>
             </xsl:otherwise>
         </xsl:choose>
     </xsl:template>
+
+    <xsl:template match="tei:rdg" mode="citation_apparat">
+        <xsl:variable name="temoin_base_citation" select="myfunctions:base_witness(.)"/>
+        <xsl:choose>
+            <xsl:when test="descendant::tei:w">
+                <xsl:apply-templates mode="apparat"/>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:text>\textit{om.}</xsl:text>
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:template>
+
+    <xsl:template match="tei:unclear" mode="citation_apparat apparat omission_simple">
+        <xsl:variable name="temoin_base_citation" select="myfunctions:base_witness(.)"/>
+        <xsl:apply-templates mode="#current"/>
+        <xsl:text>~(?)</xsl:text>
+        <xsl:if
+            test="following::node()[1][self::tei:app[descendant::tei:rdg[contains(@wit, $temoin_base_citation)][node()]]]">
+            <xsl:text> </xsl:text>
+        </xsl:if>
+    </xsl:template>
+
+
+    <!-- <xsl:template match="tei:rdg[not(contains(@wit, $temoin_base_citation))]" mode="citation_apparat">
+        <xsl:choose>
+            <xsl:when test="node()">
+                <xsl:apply-templates mode="citation_apparat"/>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:text>\textit{om.} </xsl:text>
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:template>-->
 
 
     <xsl:template match="tei:note" mode="citation_apparat"/>
@@ -610,42 +718,26 @@
         <!--On va ignorer les lb-->
         <xsl:text> </xsl:text>
     </xsl:template>
-    
-    <xsl:template match="tei:witStart" mode="citation_apparat">
+
+    <!--<xsl:template match="tei:witStart" mode="citation_apparat">
         <xsl:text>\footnoteA{Le témoin </xsl:text>
-        <xsl:value-of select="chezmoi:witstosigla(@corresp)"/>
+        <xsl:value-of select="myfunctions:witstosigla(@corresp)"/>
         <xsl:text> reprend ici.}</xsl:text>
-    </xsl:template>
-    
+    </xsl:template>-->
+
     <xsl:template match="tei:cb" mode="citation_apparat">
-        <xsl:text>[cb]</xsl:text>
+        <xsl:text>\textsuperscript{[cb]}</xsl:text>
     </xsl:template>
-    
+
     <xsl:template match="tei:space" mode="citation_apparat">
         <xsl:text> </xsl:text>
     </xsl:template>
-    
-    
-    
-    <xsl:template match="tei:add[@type = 'commentaire']" mode="citation_apparat">
-        <xsl:text>\footnoteA{Glose d'une main</xsl:text>
-        <xsl:choose>
-            <xsl:when test="@place = 'margin'">
-                <xsl:text> en marge</xsl:text>
-            </xsl:when>
-            <xsl:when test="@place = 'bottom'">
-                <xsl:text> en bas de page</xsl:text>
-            </xsl:when>
-            <xsl:when test="@place = 'inline'">
-                <xsl:text> en ligne</xsl:text>
-            </xsl:when>
-        </xsl:choose>
-        <xsl:text>: \enquote{</xsl:text>
-        <xsl:apply-templates/>
-        <xsl:text>}}</xsl:text>
-    </xsl:template>
-    
-    
+
+
+
+    <xsl:template match="tei:fw" mode="citation_apparat"/>
+
+
     <xsl:template match="tei:supplied" mode="citation_apparat">
         <xsl:text>\textit{</xsl:text>
         <xsl:apply-templates/>
@@ -659,28 +751,6 @@
         <xsl:text>]</xsl:text>
     </xsl:template>
 
-    <xsl:template match="tei:w" mode="#all">
-        <xsl:if test="not(parent::tei:del[count(descendant::tei:w) = 1])">
-            <xsl:text> </xsl:text>
-        </xsl:if>
-        <xsl:variable name="preceding" as="xs:string*"
-            select="preceding-sibling::tei:app/descendant::tei:w[position() lt 11]/text()"/>
-        <xsl:variable name="following" as="xs:string*"
-            select="following-sibling::tei:app/descendant::tei:w[position() lt 11]/text()"/>
-        <xsl:choose>
-            <xsl:when test="text() = ($preceding, $following)">
-                <xsl:text>\sameword{</xsl:text>
-                <xsl:apply-templates/>
-                <xsl:text>}</xsl:text>
-            </xsl:when>
-            <xsl:otherwise>
-                <xsl:apply-templates/>
-            </xsl:otherwise>
-        </xsl:choose>
-        <xsl:choose>
-            <xsl:when test="following::tei:pc[1]"/>
-            <xsl:otherwise> </xsl:otherwise>
-        </xsl:choose>
-    </xsl:template>
+
 
 </xsl:stylesheet>

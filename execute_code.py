@@ -4,6 +4,7 @@ import subprocess
 import os
 import sys
 import re
+from decimal import Decimal, ROUND_UP
 
 tei_namespace = 'http://www.tei-c.org/ns/1.0'
 teiExample_namespace = 'http://www.tei-c.org/ns/Examples'
@@ -34,7 +35,7 @@ def execute():
     with open("/home/mgl/Bureau/These/Edition/hyperregimiento-de-los-principes/Dedans/XML/corpus/these.xml",
               "r") as these:
         parsed_these = etree.parse(these, parser=parser)
-
+    parsed_these.xinclude()
     last_commit_p = parsed_these.xpath("//tei:p[@xml:id='dernier_commit']", namespaces=NSMAP)[0]
     last_commit_p.set("n", get_last_commit())
 
@@ -54,10 +55,16 @@ def execute():
         if instruction.xpath("boolean(descendant::node())") is False:
             corresponding_request = instruction.xpath(f"@corresp", namespaces=NSMAP)[0]
             corresponding_request = corresponding_request.replace("#", "")
-            request = \
-                parsed_these.xpath(
+            request_node = parsed_these.xpath(
                     f"//tei:div[@xml:id='requetes_xpath']//tei:item[@xml:id='{corresponding_request}']/tei:code",
-                    namespaces=NSMAP)[0].text
+                    namespaces=NSMAP)[0]
+            request = request_node.text
+                
+            
+            if len(request_node.xpath(f"@n")) > 0:
+                round_value = request_node.xpath(f"@n")[0]
+            else:
+                round_value = 1
 
         else:
             request = instruction.text
@@ -73,7 +80,7 @@ def execute():
         if isinstance(result, etree._ElementUnicodeResult):
             result = str(result)
 
-        instruction.set('result', gestion_type_donnees(result, round_value=3))
+        instruction.text =  gestion_type_donnees(result, round_value=round_value)
 
     with open(".tmp/these_tmp.xml", "w") as output_these:
         output = etree.tostring(parsed_these, pretty_print=True, encoding='utf-8', xml_declaration=True).decode('utf8')
@@ -84,18 +91,23 @@ def execute():
         output_these.write(str(output))
 
 
-def gestion_type_donnees(donnee, round_value: int = 2):
+def gestion_type_donnees(donnee, round_value: int = 1):
     """
     Cette fonction renvoie une chaîne de caractères si c'est un str, un entier si c'est un float sans décimale,
-    un float si c'est un float
+    un float arrondi si c'est un float
     :param donnee: la donnée à traiter
     :param round_value: la valeur d'arrondi
     :return:
     """
     try:
-        donnee = round(donnee, round_value)
+        decimale = '0.' + "".join(['0' for _ in range(int(round_value) - 1)]) + '1'
+        donnee = Decimal(float(donnee)).quantize(Decimal(decimale), rounding=ROUND_UP)
+        if donnee % 1 == 0:
+            donnee = int(donnee)
     except:
         pass
+
+
     return str(donnee)
 
 
@@ -107,14 +119,17 @@ def replace_ampersands():
     (au niveau des tei:egXML)
     :return:
     """
-    fichier = "/home/mgl/Bureau/These/Edition/outputs/these/tex/these.tex"
-    with open(fichier, 'r') as fichier_these:
-        these_as_string = "".join(fichier_these.readlines())
-        translated = these_as_string.replace("&", "\&").replace("&amp;", "&")
-        translated = these_as_string
-    os.remove(fichier)
-    with open(fichier, "w") as output_file:
-        output_file.write(translated)
+    fichier_these = "/home/mgl/Bureau/These/Edition/outputs/these/tex/only_these.tex" 
+    fichier_complet = "/home/mgl/Bureau/These/Edition/outputs/these/tex/these.tex"
+    liste_fichiers = [fichier_complet, fichier_these]
+    for file in liste_fichiers:
+        with open(file, 'r') as fichier_these:
+            these_as_string = "".join(fichier_these.readlines())
+            translated = these_as_string.replace("&amp;", "&").replace("AMPERSAND", "\&")
+            # translated = these_as_string
+        os.remove(file)
+        with open(file, "w") as output_file:
+            output_file.write(translated)
 
 
 if __name__ == '__main__':
