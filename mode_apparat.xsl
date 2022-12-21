@@ -227,14 +227,9 @@
     <xsl:template match="tei:app[@ana = '#not_apparat']"
         mode="citation_apparat citation_omission_complexe apparat rdg_apparat omission_simple">
         <xsl:variable name="temoin_base_citation" select="myfunctions:base_witness(.)"/>
+        <xsl:text> </xsl:text>
         <xsl:apply-templates select="descendant::tei:rdg[contains(@wit, $temoin_base_citation)]"
             mode="citation_apparat"/>
-        <xsl:if
-            test="following::node()[1][self::tei:app[descendant::tei:rdg[contains(@wit, $temoin_base_citation)][node()]]]">
-            <xsl:text> % Not_apparat ici </xsl:text>
-            <xsl:value-of select="$temoin_base_citation"/>
-            <xsl:text>&#10;</xsl:text>
-        </xsl:if>
     </xsl:template>
 
 
@@ -243,28 +238,20 @@
     <xsl:template
         match="tei:app[@ana = '#graphique'][not(contains(@ana, '#omission'))] | tei:app[contains(@ana, '#filtre')][not(contains(@ana, '#omission'))][count(descendant::tei:rdg) = 1] | tei:app[contains(@ana, '#auxiliarite')][not(contains(@ana, '#omission'))] | tei:app[contains(@ana, '#normalisation')][not(contains(@ana, '#omission'))]"
         mode="citation_apparat">
+        <xsl:text> </xsl:text>
         <xsl:variable name="temoin_base_citation" select="myfunctions:base_witness(.)"/>
         <xsl:apply-templates select="descendant::tei:rdg[contains(@wit, $temoin_base_citation)]"
             mode="citation_apparat"/>
-        <xsl:if
-            test="following::node()[1][self::tei:app[descendant::tei:rdg[contains(@wit, $temoin_base_citation)][node()]]]">
-            <xsl:text> %</xsl:text>
-            <xsl:value-of select="$temoin_base_citation"/>
-            <xsl:text>&#10;</xsl:text>
-        </xsl:if>
     </xsl:template>
 
 
     <xsl:template
         match="tei:app[contains(@ana, '#filtre')][count(descendant::tei:rdg) > 1][not(contains(@ana, '#omission'))]"
         mode="citation_apparat">
+        <xsl:text> </xsl:text>
         <xsl:variable name="temoin_base_citation" select="myfunctions:base_witness(.)"/>
         <xsl:apply-templates select="descendant::tei:rdg[contains(@wit, $temoin_base_citation)]"
             mode="citation_apparat"/>
-        <xsl:if
-            test="following::node()[1][self::tei:app[descendant::tei:rdg[contains(@wit, $temoin_base_citation)][node()]]]">
-            <xsl:text> %&#10;</xsl:text>
-        </xsl:if>
     </xsl:template>
 
 
@@ -274,12 +261,8 @@
             | tei:app[contains(@ana, '#indetermine')][count(descendant::tei:rdg) = 1]"
         mode="citation_apparat">
         <xsl:variable name="temoin_base_citation" select="myfunctions:base_witness(.)"/>
-
+        <xsl:text> </xsl:text>
         <xsl:apply-templates mode="citation_apparat"/>
-        <xsl:if
-            test="following::node()[1][self::tei:app[descendant::tei:rdg[contains(@wit, $temoin_base_citation)][node()]]]">
-            <xsl:text> %&#10;</xsl:text>
-        </xsl:if>
     </xsl:template>
 
 
@@ -710,6 +693,7 @@
         </xsl:choose>
     </xsl:template>-->
 
+    <xsl:template match="tei:milestone"/>
 
     <xsl:template match="tei:note" mode="citation_apparat"/>
 
