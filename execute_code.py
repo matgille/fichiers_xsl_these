@@ -119,9 +119,8 @@ def replace_ampersands():
     (au niveau des tei:egXML)
     :return:
     """
-    fichier_these = "/home/mgl/Bureau/These/Edition/outputs/these/tex/only_these.tex" 
     fichier_complet = "/home/mgl/Bureau/These/Edition/outputs/these/tex/these.tex"
-    liste_fichiers = [fichier_complet, fichier_these]
+    liste_fichiers = [fichier_complet]
     for file in liste_fichiers:
         with open(file, 'r') as fichier_these:
             these_as_string = "".join(fichier_these.readlines())
