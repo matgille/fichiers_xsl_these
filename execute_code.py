@@ -49,8 +49,11 @@ def execute():
             base_document = instruction.xpath("@xml:base", namespaces=NSMAP)[0]
         except:
             pass
-        with open(base_document, 'r') as target_document:
-            parsed_target = etree.parse(target_document, parser=parser)
+        try:
+            with open(base_document, 'r') as target_document:
+                parsed_target = etree.parse(target_document, parser=parser)
+        except FileNotFoundError:
+            continue
 
         if instruction.xpath("boolean(descendant::node())") is False:
             corresponding_request = instruction.xpath(f"@corresp", namespaces=NSMAP)[0]

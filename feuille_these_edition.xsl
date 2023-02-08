@@ -74,6 +74,16 @@
 
     <xsl:template match="tei:handShift" mode="#all">
         <xsl:param name="temoin_base_citation" tunnel="yes"/>
+        <xsl:variable name="type">
+            <xsl:choose>
+                <xsl:when test="@medium = 'encre'">
+                    <xsl:text>d'encre</xsl:text>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:text>de main</xsl:text>
+                </xsl:otherwise>
+            </xsl:choose>
+        </xsl:variable>
         <xsl:variable name="temoin_base">
             <xsl:choose>
                 <xsl:when test="$temoin_base_citation = ''">
@@ -88,7 +98,9 @@
         <xsl:value-of select="@xml:id"/>
         <xsl:text>}\edlabel{ed:</xsl:text>
         <xsl:value-of select="@xml:id"/>
-        <xsl:text>} Changement de main pour le manuscrit </xsl:text>
+        <xsl:text>} Changement </xsl:text>
+        <xsl:value-of select="$type"/>
+        <xsl:text> pour le manuscrit </xsl:text>
         <xsl:choose>
             <xsl:when test="@ana = '#injected'">
                 <xsl:value-of select="myfunctions:witstosigla(@corresp)"/>
@@ -98,9 +110,9 @@
             </xsl:otherwise>
         </xsl:choose>
         <xsl:text>.</xsl:text>
-        <xsl:if test="tei:note">
+        <xsl:if test="tei:desc">
             <xsl:text> </xsl:text>
-            <xsl:apply-templates mode="#current" select="tei:note"/>
+            <xsl:apply-templates mode="#current" select="tei:desc"/>
         </xsl:if>
         <xsl:text>}</xsl:text>
     </xsl:template>
@@ -242,10 +254,12 @@
 
 
     <!--TODO: Ajouter toutes les images en annexe-->
-    <xsl:template match="tei:graphic[parent::tei:note]" mode="edition">
+    <xsl:template match="tei:graphic[parent::tei:note][@rend = 'annexe']" mode="edition">
         <xsl:text>figure \ref{</xsl:text>
         <xsl:value-of select="@xml:id"/>
-        <xsl:text>}</xsl:text>
+        <xsl:text>}, page \pageref{</xsl:text>
+        <xsl:value-of select="@xml:id"/>
+        <xsl:text>} de l'annexe</xsl:text>
     </xsl:template>
     <!--TODO: Ajouter toutes les images en annexe-->
     <!--<xsl:template match="tei:sic[@ana = '#omission']" mode="edition">
@@ -471,7 +485,7 @@
     <xsl:template match="tei:add[@type = 'commentaire'][not(@rend = 'cacher')]"
         mode="edition apparat citation_apparat omission_simple sans_apparat">
         <xsl:variable name="wit" select="myfunctions:witstosigla(@corresp)"/>
-        <xsl:text>\footnoteB{Note d'une main</xsl:text>
+        <xsl:text>\footnoteB{Ajout d'une main</xsl:text>
         <xsl:choose>
             <xsl:when test="@place = 'margin'">
                 <xsl:text> en marge</xsl:text>
@@ -719,7 +733,7 @@
         </xsl:choose>
     </xsl:template>
     <!--Les ajouts de ma part sont entre crochets-->
-    <xsl:template match="tei:supplied" name="supplied" mode="edition">
+    <xsl:template match="tei:supplied" name="supplied" mode="edition citation_apparat">
         <xsl:text>[</xsl:text>
         <xsl:apply-templates mode="edition"/>
         <xsl:text>]</xsl:text>
@@ -874,7 +888,18 @@
 
 
 
-    <xsl:template match="tei:pb" mode="edition apparat">
+    <xsl:template match="tei:pb" mode="edition apparat citation_apparat">
+        <xsl:param name="temoin_base_citation" tunnel="yes"/>
+        <xsl:variable name="temoin_base">
+            <xsl:choose>
+                <xsl:when test="$temoin_base_citation = ''">
+                    <xsl:value-of select="$temoin_base_edition"/>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:value-of select="$temoin_base_citation"/>
+                </xsl:otherwise>
+            </xsl:choose>
+        </xsl:variable>
         <xsl:choose>
             <xsl:when test="ancestor::tei:TEI[@xml:id = 'Rome_W']">
                 <xsl:text>\textsuperscript{[p. </xsl:text>
@@ -902,7 +927,7 @@
                             <xsl:value-of select="myfunctions:witstosigla(ancestor::tei:rdg/@wit)"/>
                         </xsl:when>
                         <xsl:otherwise>
-                            <xsl:value-of select="myfunctions:witstosigla($temoin_base_edition)"/>
+                            <xsl:value-of select="myfunctions:witstosigla($temoin_base)"/>
                         </xsl:otherwise>
                     </xsl:choose>
                 </xsl:variable>
@@ -1224,6 +1249,7 @@
         <xsl:text>}}</xsl:text>-->
         <xsl:for-each
             select="descendant::tei:note[@type = 'codico' or @type = 'variante'][not(ancestor::tei:subst) or not(ancestor::tei:del)]">
+            <xsl:variable name="id" select="@xml:id"/>
             <xsl:text>\edtext{}{\lemma{</xsl:text>
             <xsl:value-of
                 select="ancestor::tei:app/descendant::tei:rdg[contains(@wit, $temoin_base_edition)]/tei:w"/>
@@ -1244,7 +1270,16 @@
             <xsl:text>[\textit{</xsl:text>
             <xsl:value-of select="myfunctions:witstosigla(@corresp | ancestor::node()/@corresp[1])"/>
             <xsl:text>}] |  </xsl:text>
-            <xsl:apply-templates mode="edition"/>
+            <xsl:apply-templates
+                select="collection('/home/mgl/Bureau/These/Edition/hyperregimiento-de-los-principes/Dedans/XML/temoins/castillan?select=*.xml')/descendant::tei:note[@xml:id = $id]/node()"
+                mode="edition"/>
+            <xsl:message>
+                <xsl:text>document('</xsl:text>
+                <xsl:value-of select="$corpus_path"/>
+                <xsl:text>)/descendant::tei:note[@xml:id ='</xsl:text>
+                <xsl:value-of select="$id"/>
+                <xsl:text>']</xsl:text>
+            </xsl:message>
             <xsl:text>}}</xsl:text>
         </xsl:for-each>
     </xsl:template>
@@ -1546,7 +1581,7 @@
 
 
 
-    <xsl:template match="tei:date" mode="#all">
+    <xsl:template match="tei:date" mode="these">
         <xsl:text>\textsc{</xsl:text>
         <xsl:value-of select="text()"/>
         <xsl:text>}</xsl:text>

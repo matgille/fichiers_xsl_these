@@ -647,6 +647,14 @@
 
     <xsl:template match="tei:note" mode="citation_apparat"/>
 
+    <xsl:template match="tei:p" mode="citation_apparat">
+        <xsl:text>\\&#10;</xsl:text>
+        <xsl:text>\edlabel{</xsl:text>
+        <xsl:value-of select="@n"/>
+        <xsl:text>}</xsl:text>
+        <xsl:apply-templates mode="citation_apparat"/>
+    </xsl:template>
+
 
     <xsl:template match="tei:lb[@break = 'yes']" mode="citation_apparat">
         <!--On va ignorer les lb-->
