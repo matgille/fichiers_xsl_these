@@ -95,9 +95,9 @@
             </xsl:choose>
         </xsl:variable>
         <xsl:text>\footnoteB{\label{</xsl:text>
-        <xsl:value-of select="@xml:id"/>
+        <xsl:value-of select="tei:desc/@xml:id"/>
         <xsl:text>}\edlabel{ed:</xsl:text>
-        <xsl:value-of select="@xml:id"/>
+        <xsl:value-of select="tei:desc/@xml:id"/>
         <xsl:text>} Changement </xsl:text>
         <xsl:value-of select="$type"/>
         <xsl:text> pour le manuscrit </xsl:text>
@@ -112,7 +112,7 @@
         <xsl:text>.</xsl:text>
         <xsl:if test="tei:desc">
             <xsl:text> </xsl:text>
-            <xsl:apply-templates mode="#current" select="tei:desc"/>
+            <xsl:apply-templates mode="edition" select="tei:desc"/>
         </xsl:if>
         <xsl:text>}</xsl:text>
     </xsl:template>
