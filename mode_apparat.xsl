@@ -460,7 +460,7 @@
                 <xsl:value-of select="$preceding_omitted_lemma"/>
                 <xsl:text> </xsl:text>
                 <xsl:apply-templates
-                    select="descendant::tei:rdg[not(contains(@wit, $temoin_base_citation))]"/>
+                    select="descendant::tei:rdg[not(contains(@wit, $temoin_base_citation))][1]"/>
                 <xsl:text> \textit{</xsl:text>
                 <xsl:value-of
                     select="myfunctions:witstosigla(descendant::tei:rdg[not(contains(@wit, $temoin_base_citation))]/@wit)"/>
@@ -656,7 +656,10 @@
     </xsl:template>
 
 
-    <xsl:template match="tei:lb[@break = 'yes']" mode="citation_apparat">
+
+    <xsl:template match="tei:fw" mode="citation_apparat sans_apparat"/>
+
+    <xsl:template match="tei:lb[@break = 'yes']" mode="citation_apparat sans_apparat">
         <!--On va ignorer les lb-->
         <xsl:text> </xsl:text>
     </xsl:template>

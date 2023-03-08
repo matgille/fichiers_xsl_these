@@ -284,9 +284,13 @@
             <xsl:text>~\\</xsl:text>
         </xsl:if>
     </xsl:template>
+
     <xsl:template match="tei:lb[@break = 'yes']" mode="edition">
+        <!--On va ignorer les lb-->
         <xsl:text> </xsl:text>
     </xsl:template>
+
+
     <!--Édition du texte latin en annexe-->
     <xsl:template match="tei:div[@type = 'partie']" mode="edition_texte_latin">
         <xsl:apply-templates mode="edition_texte_latin"/>
@@ -743,7 +747,7 @@
     <!--MODIFICATIONS CORRECTIONS-->
     <xsl:template match="tei:space" mode="edition">
         <xsl:choose>
-            <xsl:when test="@ana = '#tokenisation'">
+            <xsl:when test="@ana = '#tokenisation' or @ana = '#tokenisation #agglutination-pct'">
                 <xsl:text> </xsl:text>
             </xsl:when>
             <xsl:otherwise>
@@ -1057,7 +1061,8 @@
             </xsl:otherwise>
         </xsl:choose>
     </xsl:template>
-    <xsl:template match="tei:quote[@type = 'primaire'][parent::tei:note]" mode="edition">
+    <xsl:template match="tei:quote[@type = 'primaire'][parent::tei:note or ancestor::tei:handShift]"
+        mode="edition">
         <xsl:variable name="langue">
             <xsl:choose>
                 <xsl:when test="@xml:lang = 'lat'">latin</xsl:when>
@@ -1903,7 +1908,9 @@
     </xsl:function>
     <!--Fonction simple qui imprime un texte si le mode debug est activé.-->
 
-
+    <xsl:template match="tei:choice[tei:corr]" mode="citation_apparat edition">
+        <xsl:apply-templates select="tei:corr"/>
+    </xsl:template>
 
 
     <xsl:template match="tei:anchor[@type = 'ligne' or @type = 'citation']" mode="edition">
