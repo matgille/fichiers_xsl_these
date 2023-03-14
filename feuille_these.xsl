@@ -10,7 +10,7 @@
     <!--On sort du XML pour pouvoir imprimer les noeuds des éléments teiExample-->
     <!--Du coup ça semble poser un problème dans la production de l'esperluette.-->
 
-    <xsl:variable name="temoin_base_edition" select="'Esc_Q'"/>
+    <xsl:variable name="temoin_base_edition" select="'Mad_B'"/>
     <xsl:variable name="tous_les_temoins">Mad_A Mad_B Mad_G Esc_Q Phil_U Sal_J Sev_R Sev_Z</xsl:variable>
     <xsl:variable name="tous_les_temoins_tokenise">
         <xsl:value-of select="tokenize($tous_les_temoins, '\s')"/>
@@ -79,7 +79,7 @@
             select="document($chemin_temoin_base_edition)/descendant::tei:body/descendant::tei:div[@type = 'chapitre'][@n = '17' or @n = '18' or @n = '19' or @n = '20' or @n = '21' or @n = '22' or @n = '23']"
             mode="edition"/>-->
         <xsl:apply-templates
-            select="document($chemin_temoin_base_edition)/descendant::tei:body/descendant::tei:div[@type = 'chapitre'][@n = '60' or @n = '70']"
+            select="document($chemin_temoin_base_edition)/descendant::tei:body/descendant::tei:div[@type = 'chapitre'][@n = '70']"
             mode="edition"/>
         <xsl:text>\hfill\vfill Ce document est le fruit d'une compilation sur les fichiers de la version </xsl:text>
         <xsl:text>\href[pdfnewwindow=true]{https://gitlab.huma-num.fr/mgillelevenson/hyperregimiento-de-los-principes/-/tree/</xsl:text>
@@ -91,7 +91,7 @@
         <xsl:text>\setcounter{page}{1}</xsl:text>
         <xsl:text>&#10;\titleformat{\chapter}{}{}{0em}{\LARGE\bfseries}</xsl:text>
         <!--À supprimer lors de la production de la thèse: on cite tous les témoins des teiHeader-->
-        <!--                <xsl:apply-templates select="//tei:TEI[@type = 'these']/descendant::tei:back" mode="these"/>-->
+        <!--        <xsl:apply-templates select="//tei:TEI[@type = 'these']/descendant::tei:back" mode="these"/>-->
         <xsl:text>\pagestyle{bibliographie}</xsl:text>
         <xsl:text>\nocite{</xsl:text>
         <xsl:value-of
@@ -1023,7 +1023,7 @@
         </xsl:choose>
     </xsl:template>
 
-    <xsl:template mode="these" name="quote_primaire"
+    <xsl:template mode="these"
         match="tei:quote[@type = 'primaire'][not(parent::tei:note)][not(@subtype = 'vers') and not(@subtype = 'diplomatique')]">
         <xsl:variable name="threshold">200</xsl:variable>
         <xsl:variable name="langue">
@@ -1040,6 +1040,12 @@
                 <xsl:choose>
                     <xsl:when test="ancestor::tei:table[@rend = 'cote_a_cote']">
                         <xsl:apply-templates mode="these"/>
+                    </xsl:when>
+                    <xsl:when test="not(ancestor::tei:table[@rend = 'cote_a_cote']) and @rend = 'bloc'">
+
+                        <xsl:text>\begin{quote}</xsl:text>
+                        <xsl:apply-templates mode="these"/>
+                        <xsl:text> \end{quote}</xsl:text>
                     </xsl:when>
                     <xsl:when
                         test="not(ancestor::tei:table[@rend = 'cote_a_cote']) and string-length(replace(string-join(child::text()), '\s+', ' ')) > $threshold">
@@ -1063,6 +1069,14 @@
                         <xsl:text>}</xsl:text>
                         <xsl:apply-templates mode="these"/>
                         <xsl:text>\end{otherlanguage}</xsl:text>
+                    </xsl:when>
+                    <xsl:when test="not(ancestor::tei:table[@rend = 'cote_a_cote']) and @rend = 'bloc'">
+
+                        <xsl:text>\begin{quote}\begin{otherlanguage}{</xsl:text>
+                        <xsl:value-of select="$langue"/>
+                        <xsl:text>}</xsl:text>
+                        <xsl:apply-templates mode="these"/>
+                        <xsl:text>\end{otherlanguage}\end{quote}</xsl:text>
                     </xsl:when>
                     <xsl:when
                         test="not(ancestor::tei:table[@rend = 'cote_a_cote']) and string-length(replace(string-join(child::text()), '\s+', ' ')) > $threshold">
@@ -2766,7 +2780,7 @@
                     | document($corpus_path)/descendant::tei:TEI[@xml:id = 'Val_S']/descendant::node()[@xml:id = $anchor]">
                 <xsl:text> \lbrack\cite{</xsl:text>
                 <xsl:value-of select="$corresponding_wit_id"/>
-                <xsl:text>}, III, 3, </xsl:text>
+                <xsl:text>}, III‑3‑</xsl:text>
                 <xsl:value-of select="$corresponding_wit_n"/>
                 <xsl:text>, </xsl:text>
                 <xsl:value-of select="$folio_or_page"/>
@@ -2776,7 +2790,7 @@
                     <xsl:when
                         test="contains(@rend, 'sans_apparat') and not($temoin_base_edition = $corresponding_wit_id)"/>
                     <xsl:otherwise>
-                        <xsl:text>; édition p. \edpageref{</xsl:text>
+                        <xsl:text>; éd. p. \edpageref{</xsl:text>
                         <xsl:value-of select="$anchor"/>
                         <xsl:text>}</xsl:text>
                     </xsl:otherwise>
@@ -2787,7 +2801,7 @@
                 test="document($corpus_path)/descendant::tei:TEI[@xml:id = 'Rome_W']/descendant::node()[@xml:id = $anchor]">
                 <xsl:text> \lbrack\cite{</xsl:text>
                 <xsl:value-of select="$corresponding_wit_id"/>
-                <xsl:text>}, III, 3, </xsl:text>
+                <xsl:text>}, III‑3‑</xsl:text>
                 <xsl:value-of select="$corresponding_wit_n"/>
                 <xsl:text>, </xsl:text>
                 <xsl:value-of select="$folio_or_page"/>
@@ -2810,7 +2824,7 @@
             <xsl:otherwise>
                 <xsl:text> \lbrack\cite{</xsl:text>
                 <xsl:value-of select="$corresponding_wit_id"/>
-                <xsl:text>}, III, 3, </xsl:text>
+                <xsl:text>}, III‑3‑</xsl:text>
                 <xsl:value-of select="$corresponding_wit_n"/>
                 <xsl:text>, </xsl:text>
                 <xsl:value-of select="$glose_ou_traduction"/>
@@ -2822,7 +2836,7 @@
                     <xsl:when
                         test="contains(@rend, 'sans_apparat') and not($temoin_base_edition = $corresponding_wit_id)"/>
                     <xsl:otherwise>
-                        <xsl:text>; édition p. \edpageref{</xsl:text>
+                        <xsl:text>; éd. p. \edpageref{</xsl:text>
                         <xsl:value-of select="$anchor"/>
                         <xsl:text>}</xsl:text>
                     </xsl:otherwise>
@@ -3004,7 +3018,7 @@
                     | document($corpus_path)/descendant::tei:TEI[@xml:id = 'Val_S']/descendant::tei:anchor[@xml:id = $beginning_anchor]">
                 <xsl:text> \lbrack\cite{</xsl:text>
                 <xsl:value-of select="$corresponding_wit_id"/>
-                <xsl:text>}, III, 3, </xsl:text>
+                <xsl:text>}, III‑3‑</xsl:text>
                 <xsl:value-of select="$corresponding_wit_n"/>
                 <xsl:text>, </xsl:text>
                 <xsl:value-of select="$folio_or_page"/>
@@ -3014,7 +3028,7 @@
                     <xsl:when
                         test="contains(@rend, 'sans_apparat') and not($temoin_base_edition = $corresponding_wit_id)"/>
                     <xsl:otherwise>
-                        <xsl:text>; édition p. \edpageref{</xsl:text>
+                        <xsl:text>; éd. p. \edpageref{</xsl:text>
                         <xsl:value-of select="$beginning_anchor"/>
                         <xsl:text>}</xsl:text>
                     </xsl:otherwise>
@@ -3025,7 +3039,7 @@
                 test="document($corpus_path)/descendant::tei:TEI[@xml:id = 'Rome_W']/descendant::tei:anchor[@xml:id = $beginning_anchor]">
                 <xsl:text> \lbrack\cite{</xsl:text>
                 <xsl:value-of select="$corresponding_wit_id"/>
-                <xsl:text>}, III, 3, </xsl:text>
+                <xsl:text>}, III‑3‑</xsl:text>
                 <xsl:value-of select="$corresponding_wit_n"/>
                 <xsl:text>, </xsl:text>
                 <xsl:value-of select="$folio_or_page"/>
@@ -3048,7 +3062,7 @@
             <xsl:otherwise>
                 <xsl:text> \lbrack\cite{</xsl:text>
                 <xsl:value-of select="$corresponding_wit_id"/>
-                <xsl:text>}, III, 3, </xsl:text>
+                <xsl:text>}, III‑3‑</xsl:text>
                 <xsl:value-of select="$corresponding_wit_n"/>
                 <xsl:text>, </xsl:text>
                 <xsl:value-of select="$glose_ou_traduction"/>
@@ -3060,7 +3074,7 @@
                     <xsl:when
                         test="contains(@rend, 'sans_apparat') and not($temoin_base_edition = $corresponding_wit_id)"/>
                     <xsl:otherwise>
-                        <xsl:text>; édition p. \edpageref{</xsl:text>
+                        <xsl:text>; éd. p. \edpageref{</xsl:text>
                         <xsl:value-of select="$beginning_anchor"/>
                         <xsl:text>}</xsl:text>
                     </xsl:otherwise>
