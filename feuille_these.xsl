@@ -1,9 +1,8 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:tei="http://www.tei-c.org/ns/1.0"
-    xmlns:teiExample="http://www.tei-c.org/ns/Examples"
-    xmlns:myfunctions="https://www.matthiasgillelevenson.fr/ns/1.0"
-    xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xalan="http://xml.apache.org/xalan"
-    xmlns:java="http://www.java.com/" exclude-result-prefixes="java xs" version="3.0">
+    xmlns:teiExample="http://www.tei-c.org/ns/Examples" xmlns:myfunctions="https://www.matthiasgillelevenson.fr/ns/1.0"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xalan="http://xml.apache.org/xalan" xmlns:java="http://www.java.com/"
+    exclude-result-prefixes="java xs" version="3.0">
 
     <xsl:output method="xml" omit-xml-declaration="yes" indent="no" xalan:indent-amount="2"/>
     <!--https://stackoverflow.com/a/5443647-->
@@ -30,7 +29,7 @@
 
 
     <xsl:variable name="chemin_temoin_base_edition"
-        select="concat('/home/mgl/Bureau/These/Edition/collator/results/', $temoin_base_edition, '.xml')"/>
+        select="concat('/home/mgl/Bureau/These/Edition/hyperregimiento-de-los-principes/Dedans/XML/edition/temoins/', $temoin_base_edition, '.xml')"/>
 
     <xsl:template match="/">
         <xsl:result-document
@@ -46,8 +45,7 @@
                 select="$corpus//tei:TEI[@xml:id = 'hors_corpus']/descendant::tei:sourceDesc/descendant::tei:listWit"
                 mode="biblio_temoins_autres"/>
             <xsl:text>&#009;&#009;</xsl:text>
-            <xsl:apply-templates select="$corpus/descendant::tei:TEI[@xml:id = 'Rome_W']"
-                mode="biblio_temoins_corpus"/>
+            <xsl:apply-templates select="$corpus/descendant::tei:TEI[@xml:id = 'Rome_W']" mode="biblio_temoins_corpus"/>
         </xsl:result-document>
         <xsl:text>&#10;&#10;
         \newpage
@@ -62,7 +60,9 @@
         <xsl:apply-templates select="//tei:TEI[@type = 'these']/descendant::tei:body" mode="these"/>
         <xsl:text>&#10;&#10;\cleardoublepage&#10;&#10;
         % On a un fonctionnement différent entre la thèse et l'édition.&#10;</xsl:text>
-        <xsl:text>\part{Édition critique comparative}&#10;\setcounter{section}{0}&#10;</xsl:text>
+        <xsl:text>\part{Édition du texte selon le manuscrit </xsl:text>
+        <xsl:value-of select="myfunctions:witstosigla($temoin_base_edition)"/>
+        <xsl:text>}&#10;\setcounter{section}{0}&#10;</xsl:text>
         <xsl:apply-templates select="//tei:div[@xml:id = 'SYJfTfmQOF']" mode="these"/>
         <xsl:text>\cleardoublepage
         \onlysideX[B]{R}
@@ -79,7 +79,7 @@
             select="document($chemin_temoin_base_edition)/descendant::tei:body/descendant::tei:div[@type = 'chapitre'][@n = '17' or @n = '18' or @n = '19' or @n = '20' or @n = '21' or @n = '22' or @n = '23']"
             mode="edition"/>-->
         <xsl:apply-templates
-            select="document($chemin_temoin_base_edition)/descendant::tei:body/descendant::tei:div[@type = 'chapitre'][@n = '70']"
+            select="document($chemin_temoin_base_edition)/descendant::tei:body/descendant::tei:div[@type = 'chapitre'][@n = '1400']"
             mode="edition"/>
         <xsl:text>\hfill\vfill Ce document est le fruit d'une compilation sur les fichiers de la version </xsl:text>
         <xsl:text>\href[pdfnewwindow=true]{https://gitlab.huma-num.fr/mgillelevenson/hyperregimiento-de-los-principes/-/tree/</xsl:text>
@@ -137,9 +137,7 @@
                 <xsl:value-of select="concat('avant ', descendant::tei:origDate/@notAfter)"/>
             </xsl:when>
             <xsl:when test="descendant::tei:origDate[@notBefore][@notAfter]">
-                <xsl:value-of
-                    select="concat(descendant::tei:origDate/@notBefore, ' - ', descendant::tei:origDate/@notAfter)"
-                />
+                <xsl:value-of select="concat(descendant::tei:origDate/@notBefore, ' - ', descendant::tei:origDate/@notAfter)"/>
             </xsl:when>
             <xsl:when test="descendant::tei:origDate[@when]">
                 <xsl:value-of select="descendant::tei:origDate/@when"/>
@@ -189,9 +187,7 @@
                 <xsl:value-of select="concat('avant ', descendant::tei:origDate/@notAfter)"/>
             </xsl:when>
             <xsl:when test="descendant::tei:origDate[@notBefore][@notAfter]">
-                <xsl:value-of
-                    select="concat(descendant::tei:origDate/@notBefore, ' - ', descendant::tei:origDate/@notAfter)"
-                />
+                <xsl:value-of select="concat(descendant::tei:origDate/@notBefore, ' - ', descendant::tei:origDate/@notAfter)"/>
             </xsl:when>
         </xsl:choose>
         <xsl:text>},</xsl:text>
@@ -402,16 +398,14 @@
         \phantomsection\stepcounter{chapter}\addcontentsline{toc}{chapter}{Transcription de l'imprimé latin de 1607}
         \setcounter{section}{0}</xsl:text>-->
         <xsl:apply-templates mode="these" select="descendant::tei:p"/>
-        <xsl:apply-templates select="$corpus/descendant::tei:TEI[@xml:id = 'Rome_W']"
-            mode="edition_texte_latin"/>
+        <xsl:apply-templates select="$corpus/descendant::tei:TEI[@xml:id = 'Rome_W']" mode="edition_texte_latin"/>
     </xsl:template>
 
     <xsl:template match="tei:div[@xml:id = 'marques_lecture']" priority="10" mode="these">
         <xsl:text>\chapter{Marques de lecture}</xsl:text>
         <xsl:text>\label{marques_lecture}</xsl:text>
         <xsl:apply-templates mode="these"/>
-        <xsl:for-each
-            select="$corpus//tei:TEI[@type = 'transcription'][descendant::tei:anchor[@type = 'marque_lecture']]">
+        <xsl:for-each select="$corpus//tei:TEI[@type = 'transcription'][descendant::tei:anchor[@type = 'marque_lecture']]">
             <xsl:variable name="witness" select="@xml:id"/>
             <xsl:variable name="sigla" select="myfunctions:witstosigla($witness)"/>
             <xsl:text>\section{Manuscrit </xsl:text>
@@ -481,8 +475,7 @@
         \phantomsection\stepcounter{chapter}\addcontentsline{toc}{chapter}{Transcription de l'imprimé latin de 1607}
         \setcounter{section}{0}</xsl:text>-->
         <xsl:apply-templates mode="these" select="descendant::tei:p"/>
-        <xsl:apply-templates select="$corpus/descendant::tei:TEI[@xml:id = 'comunidad_escorial']"
-            mode="edition_texte_latin"/>
+        <xsl:apply-templates select="$corpus/descendant::tei:TEI[@xml:id = 'comunidad_escorial']" mode="edition_texte_latin"/>
     </xsl:template>
 
 
@@ -560,8 +553,7 @@
             <xsl:value-of select="@xml:id"/>
             <xsl:text>}</xsl:text>
         </xsl:if>
-        <xsl:for-each
-            select="document($chemin_temoin_base_edition)/descendant::tei:div[@type = 'chapitre']">
+        <xsl:for-each select="document($chemin_temoin_base_edition)/descendant::tei:div[@type = 'chapitre']">
             <xsl:variable name="chapter" select="@n"/>
             <xsl:if
                 test="document($chemin_temoin_base_edition)/descendant::tei:div[@type = 'chapitre'][@n = $chapter]/descendant::tei:figure | document('/home/mgl/Bureau/These/Edition/hyperregimiento-de-los-principes/Dedans/XML/temoins/castillan/Val_S.xml')/descendant::tei:div[@type = 'chapitre'][@n = $chapter]/descendant::tei:figure">
@@ -626,8 +618,7 @@
         </xsl:for-each>
         <xsl:text>\clearpage</xsl:text>
         <xsl:text>\chapter{Images de phénomènes propres aux témoins}</xsl:text>
-        <xsl:for-each
-            select="$corpus/descendant::tei:graphic[contains(@rend, 'annexe')][not(ancestor::tei:figure)]">
+        <xsl:for-each select="$corpus/descendant::tei:graphic[contains(@rend, 'annexe')][not(ancestor::tei:figure)]">
             <xsl:variable name="id" select="@xml:id"/>
             <xsl:variable name="corresponding_page">
                 <xsl:choose>
@@ -726,9 +717,7 @@
         <xsl:text>\section{Tableaux}</xsl:text>
         <!--On va chercher tous les enfants de cette section (qui sont des tableaux forcément)-->
         <xsl:apply-templates select="descendant::node()[not(contains(@rend, 'paysage'))]" mode="annexe"/>
-        <xsl:apply-templates
-            select="//tei:table[contains(@rend, 'annexe')][not(contains(@rend, 'paysage'))]"
-            mode="annexe"/>
+        <xsl:apply-templates select="//tei:table[contains(@rend, 'annexe')][not(contains(@rend, 'paysage'))]" mode="annexe"/>
         <!--D'abord les tableaux en mode portrait-->
 
 
@@ -736,8 +725,7 @@
         <xsl:text>
             \begin{landscape}\pagestyle{empty}</xsl:text>
         <xsl:apply-templates select="descendant::node()[contains(@rend, 'paysage')]" mode="annexe"/>
-        <xsl:apply-templates select="//tei:table[contains(@rend, 'annexe')][contains(@rend, 'paysage')]"
-            mode="annexe"/>
+        <xsl:apply-templates select="//tei:table[contains(@rend, 'annexe')][contains(@rend, 'paysage')]" mode="annexe"/>
         <xsl:text>
         \end{landscape}\clearpage\pagestyle{commentaire}</xsl:text>
         <!--Puis les tableaux en mode paysages-->
@@ -747,8 +735,7 @@
 
 
 
-    <xsl:template mode="these"
-        match="tei:div[@type = 'sous_section'][not(ancestor::tei:div[@xml:id = 'resume_outils'])]">
+    <xsl:template mode="these" match="tei:div[@type = 'sous_section'][not(ancestor::tei:div[@xml:id = 'resume_outils'])]">
         <xsl:choose>
             <xsl:when test="@rend = 'unnumbered'">
                 <xsl:text>&#10;\subsection*</xsl:text>
@@ -782,8 +769,7 @@
         <xsl:apply-templates mode="these" select="child::tei:*[not(self::tei:head)]"/>
     </xsl:template>
 
-    <xsl:template mode="these"
-        match="tei:div[@type = 'sous_section'][ancestor::tei:div[@xml:id = 'resume_outils']]">
+    <xsl:template mode="these" match="tei:div[@type = 'sous_section'][ancestor::tei:div[@xml:id = 'resume_outils']]">
         <xsl:text>&#10;&#10;\paragraph*{</xsl:text>
         <xsl:value-of select="tei:head"/>
         <xsl:text>}\label{</xsl:text>
@@ -931,19 +917,11 @@
     <xsl:template mode="these"
         match="tei:quote[@type = 'secondaire'][ancestor::tei:note][not(@subtype = 'vers') and not(@subtype = 'diplomatique')]">
         <xsl:variable name="threshold">300</xsl:variable>
-        <xsl:variable name="langue">
-            <xsl:choose>
-                <xsl:when test="@xml:lang = 'lat'">latin</xsl:when>
-                <xsl:when test="@xml:lang = 'eng'">english</xsl:when>
-                <xsl:when test="@xml:lang = 'spo' or @xml:lang = 'spa' or @xml:lang = 'cat'"
-                    >spanish</xsl:when>
-                <xsl:otherwise>french</xsl:otherwise>
-            </xsl:choose>
-        </xsl:variable>
+        <xsl:variable name="langue" select="myfunctions:iso_lang_to_language(@xml:lang)"/>
         <xsl:choose>
             <xsl:when test="$langue = 'french'">
                 <xsl:choose>
-                    <xsl:when test="string-length(string-join(child::text())) &gt; $threshold">
+                    <xsl:when test="string-length(string-join(child::text())) &gt; $threshold and not(@rend = 'inline')">
                         <xsl:text>\begin{quote}</xsl:text>
                         <xsl:apply-templates mode="these"/>
                         <xsl:text> \end{quote}</xsl:text>
@@ -957,7 +935,7 @@
             </xsl:when>
             <xsl:otherwise>
                 <xsl:choose>
-                    <xsl:when test="string-length(string-join(child::text())) > $threshold">
+                    <xsl:when test="string-length(string-join(child::text())) > $threshold and not(@rend = 'inline')">
                         <xsl:text>\begin{quote}\begin{otherlanguage}{</xsl:text>
                         <xsl:value-of select="$langue"/>
                         <xsl:text>}</xsl:text>
@@ -979,15 +957,7 @@
     <xsl:template mode="these"
         match="tei:quote[@type = 'secondaire'][not(ancestor::tei:note)][not(@subtype = 'vers') and not(@subtype = 'diplomatique')]">
         <xsl:variable name="threshold">200</xsl:variable>
-        <xsl:variable name="langue">
-            <xsl:choose>
-                <xsl:when test="@xml:lang = 'lat'">latin</xsl:when>
-                <xsl:when test="@xml:lang = 'eng'">english</xsl:when>
-                <xsl:when test="@xml:lang = 'fra'">french</xsl:when>
-                <xsl:when test="@xml:lang = 'spo' or @xml:lang = 'spa'">spanish</xsl:when>
-                <xsl:otherwise>french</xsl:otherwise>
-            </xsl:choose>
-        </xsl:variable>
+        <xsl:variable name="langue" select="myfunctions:iso_lang_to_language(@xml:lang)"/>
         <xsl:choose>
             <xsl:when test="$langue = 'french'">
                 <xsl:choose>
@@ -1005,7 +975,7 @@
             </xsl:when>
             <xsl:otherwise>
                 <xsl:choose>
-                    <xsl:when test="string-length(string-join(child::text())) > $threshold">
+                    <xsl:when test="string-length(string-join(descendant::text())) > $threshold">
                         <xsl:text>\begin{quote}\begin{otherlanguage}{</xsl:text>
                         <xsl:value-of select="$langue"/>
                         <xsl:text>}</xsl:text>
@@ -1026,15 +996,7 @@
     <xsl:template mode="these"
         match="tei:quote[@type = 'primaire'][not(parent::tei:note)][not(@subtype = 'vers') and not(@subtype = 'diplomatique')]">
         <xsl:variable name="threshold">200</xsl:variable>
-        <xsl:variable name="langue">
-            <xsl:choose>
-                <xsl:when test="@xml:lang = 'lat'">latin</xsl:when>
-                <xsl:when test="@xml:lang = 'eng'">english</xsl:when>
-                <xsl:when test="@xml:lang = 'spo' or @xml:lang = 'spa' or @xml:lang = 'cat'"
-                    >spanish</xsl:when>
-                <xsl:otherwise>french</xsl:otherwise>
-            </xsl:choose>
-        </xsl:variable>
+        <xsl:variable name="langue" select="myfunctions:iso_lang_to_language(@xml:lang)"/>
         <xsl:choose>
             <xsl:when test="$langue = 'french'">
                 <xsl:choose>
@@ -1102,20 +1064,11 @@
     <xsl:template mode="these"
         match="tei:quote[@type = 'corpus'][not(parent::tei:note)][not(@subtype = 'vers') and not(@subtype = 'diplomatique')]">
         <xsl:variable name="threshold">50</xsl:variable>
-        <xsl:variable name="langue">
-            <xsl:choose>
-                <xsl:when test="@xml:lang = 'lat'">latin</xsl:when>
-                <xsl:when test="@xml:lang = 'eng'">english</xsl:when>
-                <xsl:when test="@xml:lang = 'spo' or @xml:lang = 'spa' or @xml:lang = 'cat'"
-                    >spanish</xsl:when>
-                <xsl:otherwise>french</xsl:otherwise>
-            </xsl:choose>
-        </xsl:variable>
+        <xsl:variable name="langue" select="myfunctions:iso_lang_to_language(@xml:lang)"/>
         <xsl:choose>
             <xsl:when test="$langue = 'french'">
                 <xsl:choose>
-                    <xsl:when
-                        test="string-length(replace(string-join(child::text()), '\s+', ' ')) > $threshold">
+                    <xsl:when test="string-length(replace(string-join(child::text()), '\s+', ' ')) > $threshold">
                         <!--Ici on ne tient pas en compte les notes éventuelles: on veut calculer la taille de la citation uniquement.-->
                         <xsl:text>\begin{quote}</xsl:text>
                         <xsl:apply-templates mode="these"/>
@@ -1155,15 +1108,7 @@
     <xsl:template mode="these"
         match="tei:quote[@type = 'primaire'][not(parent::tei:note)][@subtype = 'vers' or @subtype = 'diplomatique']">
         <xsl:text>\begin{adjustwidth}{4.5cm}{2cm}</xsl:text>
-        <xsl:variable name="langue">
-            <xsl:choose>
-                <xsl:when test="@xml:lang = 'lat'">latin</xsl:when>
-                <xsl:when test="@xml:lang = 'eng'">english</xsl:when>
-                <xsl:when test="@xml:lang = 'spo' or @xml:lang = 'spa' or @xml:lang = 'cat'"
-                    >spanish</xsl:when>
-                <xsl:otherwise>french</xsl:otherwise>
-            </xsl:choose>
-        </xsl:variable>
+        <xsl:variable name="langue" select="myfunctions:iso_lang_to_language(@xml:lang)"/>
         <xsl:choose>
             <xsl:when test="$langue = 'french'">
                 <xsl:choose>
@@ -1207,24 +1152,16 @@
 
 
     <xsl:template mode="these" match="tei:quote[@type = 'primaire'][parent::tei:note]">
-        <xsl:variable name="langue">
-            <xsl:choose>
-                <xsl:when test="@xml:lang = 'lat'">latin</xsl:when>
-                <xsl:when test="@xml:lang = 'eng'">english</xsl:when>
-                <xsl:when test="@xml:lang = 'spo' or @xml:lang = 'spa' or @xml:lang = 'cat'"
-                    >spanish</xsl:when>
-                <xsl:otherwise>french</xsl:otherwise>
-            </xsl:choose>
-        </xsl:variable>
+        <xsl:variable name="langue" select="myfunctions:iso_lang_to_language(@xml:lang)"/>
         <xsl:choose>
             <xsl:when test="$langue != 'french'">
                 <xsl:choose>
                     <xsl:when test="not(child::tei:l)">
                         <xsl:text>\enquote{\begin{otherlanguage}{</xsl:text>
                         <xsl:value-of select="$langue"/>
-                        <xsl:text>}</xsl:text>
+                        <xsl:text>}\textit{</xsl:text>
                         <xsl:apply-templates mode="these"/>
-                        <xsl:text>\end{otherlanguage}}</xsl:text>
+                        <xsl:text>}\end{otherlanguage}}</xsl:text>
                     </xsl:when>
                     <xsl:otherwise>
                         <xsl:text>\begin{quote}\begin{otherlanguage}{</xsl:text>
@@ -1257,11 +1194,10 @@
     <xsl:template mode="these" match="tei:soCalled">
         <xsl:text>\enquote{</xsl:text>
         <xsl:apply-templates mode="these"/>
-        <xsl:text>}~</xsl:text>
+        <xsl:text>}</xsl:text>
     </xsl:template>
 
-    <xsl:template mode="these"
-        match="tei:list[not(ancestor::tei:div[@xml:id = 'requetes_xpath'])][not(@rend = 'enumerated')]">
+    <xsl:template mode="these" match="tei:list[not(ancestor::tei:div[@xml:id = 'requetes_xpath'])][not(@rend = 'enumerated')]">
         <xsl:variable name="env">
             <xsl:choose>
                 <xsl:when test="@rend = 'inline'">
@@ -1298,8 +1234,7 @@
     </xsl:template>
 
 
-    <xsl:template mode="these"
-        match="tei:list[not(ancestor::tei:div[@xml:id = 'requetes_xpath'])][@rend = 'enumerated']">
+    <xsl:template mode="these" match="tei:list[not(ancestor::tei:div[@xml:id = 'requetes_xpath'])][@rend = 'enumerated']">
         <xsl:text>\begin{enumerate}</xsl:text>
         <xsl:for-each select="tei:item">
             <xsl:text>\item </xsl:text>
@@ -1355,6 +1290,10 @@
         </xsl:if>
         <xsl:text>\centering</xsl:text>
         <xsl:apply-templates mode="these" select="node()[not(self::tei:desc)]"/>
+        <xsl:if test="descendant::tei:desc[descendant::tei:code]">
+            <!--https://tex.stackexchange.com/a/8814-->
+            <xsl:text>\cprotect</xsl:text>
+        </xsl:if>
         <xsl:text>\caption</xsl:text>
         <xsl:if test="tei:desc[@type = 'short']">
             <xsl:text>[</xsl:text>
@@ -1385,8 +1324,7 @@
         <xsl:text>}</xsl:text>
     </xsl:template>
 
-    <xsl:template mode="these"
-        match="tei:figure[not(@rend = 'cote_a_cote')][tei:graphic][not(@rend = 'annexe')]">
+    <xsl:template mode="these" match="tei:figure[not(@rend = 'cote_a_cote')][tei:graphic][not(@rend = 'annexe')]">
         <xsl:text>
         \begin{figure}[!htp]
         \centering</xsl:text>
@@ -1396,6 +1334,10 @@
                 <xsl:text>\hspace{.1cm}</xsl:text>
             </xsl:if>
         </xsl:for-each>
+        <xsl:if test="descendant::tei:desc[descendant::tei:code]">
+            <!--https://tex.stackexchange.com/a/8814-->
+            <xsl:text>\cprotect</xsl:text>
+        </xsl:if>
         <xsl:text>\caption</xsl:text>
         <xsl:if test="tei:desc[@type = 'short']">
             <xsl:text>[</xsl:text>
@@ -1420,6 +1362,10 @@
         \begin{figure}[!htp]
         \centering</xsl:text>
         <xsl:apply-templates mode="these" select="node()[not(self::tei:desc)]"/>
+        <xsl:if test="descendant::tei:desc[descendant::tei:code]">
+            <!--https://tex.stackexchange.com/a/8814-->
+            <xsl:text>\cprotect</xsl:text>
+        </xsl:if>
         <xsl:text>\caption</xsl:text>
         <xsl:if test="descendant::tei:desc[@type = 'short']">
             <xsl:text>[</xsl:text>
@@ -1570,7 +1516,7 @@
         <xsl:text>}</xsl:text>
     </xsl:template>
 
-    <xsl:template mode="these" match="tei:code[contains(@rend, 'show')][not(parent::tei:note)]">
+    <xsl:template mode="these" match="tei:code[contains(@rend, 'show')]">
         <!--À revoir plus tard à tête reposée-->
         <!--<xsl:text>\codeword{</xsl:text>
         <!-\-On supprime les espaces surnuméraires qui forment un saut de ligne 
@@ -1584,42 +1530,23 @@
             </xsl:when>
             <xsl:otherwise>
                 <xsl:text>\texttt{\frenchspacing </xsl:text>
-                <xsl:apply-templates mode="these"/>
+                <xsl:value-of select="myfunctions:escape_code(.)" disable-output-escaping="yes"/>
                 <xsl:text>}</xsl:text>
             </xsl:otherwise>
         </xsl:choose>
     </xsl:template>
 
 
-    <xsl:template mode="these" match="tei:code[parent::tei:note]">
-        <!--À revoir plus tard à tête reposée-->
-        <xsl:text>\codeword{</xsl:text>
-        <!--On supprime les espaces surnuméraires qui forment un saut de ligne 
-            d'une façon ou d'une autre. codeword (verbatim) n'acceptent que des éléments en ligne.-->
+    <!--<xsl:template mode="these" match="tei:code[parent::tei:note]">
+        <!-\-À revoir plus tard à tête reposée-\->
+        <xsl:text>\texttt{</xsl:text>
+        <!-\-On supprime les espaces surnuméraires qui forment un saut de ligne 
+            d'une façon ou d'une autre. codeword (verbatim) n'acceptent que des éléments en ligne.-\->
         <xsl:value-of select="myfunctions:escape_code(.)" disable-output-escaping="yes"/>
         <xsl:text>}</xsl:text>
-    </xsl:template>
+    </xsl:template>-->
 
 
-    <xsl:function name="myfunctions:escape_code">
-        <xsl:param name="input"/>
-        <xsl:variable name="v1">
-            <xsl:value-of select="replace($input, '&amp;', $and)" disable-output-escaping="yes"/>
-        </xsl:variable>
-        <xsl:variable name="v2">
-            <xsl:value-of select="replace($v1, '\s+', ' ')" disable-output-escaping="yes"/>
-        </xsl:variable>
-        <xsl:variable name="v3">
-            <xsl:value-of select="replace($v2, '%', '\\%')" disable-output-escaping="yes"/>
-        </xsl:variable>
-        <xsl:variable name="v4">
-            <xsl:value-of select="replace($v3, '\{', '\\{')" disable-output-escaping="yes"/>
-        </xsl:variable>
-        <xsl:variable name="v5">
-            <xsl:value-of select="replace($v4, '\}', '\\}')" disable-output-escaping="yes"/>
-        </xsl:variable>
-        <xsl:value-of select="$v5" disable-output-escaping="yes"/>
-    </xsl:function>
 
 
     <xsl:template mode="these" match="tei:item[ancestor::tei:div[@xml:id = 'requetes_xpath']]">
@@ -1656,9 +1583,7 @@
                     <xsl:value-of select="@xml:base"/>
                 </xsl:when>
                 <xsl:otherwise>
-                    <xsl:value-of
-                        select="ancestor::node()[self::tei:p[@xml:base] or self::tei:div[@xml:base]][1]/@xml:base"
-                    />
+                    <xsl:value-of select="ancestor::node()[self::tei:p[@xml:base] or self::tei:div[@xml:base]][1]/@xml:base"/>
                 </xsl:otherwise>
             </xsl:choose>
         </xsl:variable>
@@ -1666,9 +1591,7 @@
         <xsl:variable name="preceding-base">
             <xsl:choose>
                 <xsl:when test="preceding::tei:code[@lang = 'xpath'][@type = 'execute'][1][@xml:base]">
-                    <xsl:value-of
-                        select="preceding::tei:code[@lang = 'xpath'][@type = 'execute'][1][@xml:base]/@xml:base"
-                    />
+                    <xsl:value-of select="preceding::tei:code[@lang = 'xpath'][@type = 'execute'][1][@xml:base]/@xml:base"/>
                 </xsl:when>
                 <xsl:otherwise>
                     <xsl:value-of
@@ -1823,7 +1746,7 @@
             <xsl:text> {\normalfont </xsl:text>
         </xsl:if>
         <xsl:choose>
-            <xsl:when test="ancestor::tei:note or ancestor::tei:desc">
+            <xsl:when test="ancestor::tei:note or ancestor::tei:desc or ancestor::tei:head">
                 <xsl:if test="ancestor::tei:desc">
                     <xsl:text>\protect </xsl:text>
                 </xsl:if>
@@ -1865,7 +1788,7 @@
             </xsl:when>
         </xsl:choose>
         <xsl:if
-            test="not(node() | ancestor::tei:note | ancestor::tei:quote | ancestor::tei:desc) or ancestor::tei:table[@rend = 'cote_a_cote']">
+            test="not(node() | ancestor::tei:note | ancestor::tei:quote | ancestor::tei:desc | ancestor::tei:head) or ancestor::tei:table[@rend = 'cote_a_cote']">
             <xsl:text>]</xsl:text>
         </xsl:if>
         <xsl:if test="parent::tei:quote[@xml:lang][not(@xml:lang = 'fr')]">
@@ -1874,6 +1797,11 @@
     </xsl:template>
 
 
+    <xsl:template match="tei:val" mode="#all">
+        <xsl:text>`</xsl:text>
+        <xsl:apply-templates mode="#current"/>
+        <xsl:text>'</xsl:text>
+    </xsl:template>
 
     <xsl:template mode="these" match="tei:ref[@type = 'biblio'][@rend = 'print_title']">
         <!--Créer une règle pour gérer les multiples appels de références, avec un analyse-string-->
@@ -1971,16 +1899,34 @@
         </xsl:text>
     </xsl:template>
 
-    <xsl:template mode="these" match="tei:title[not(@type)]">
+    <xsl:template mode="these" match="tei:title[not(@type) or @type = 'programme']">
         <xsl:text>\textit{</xsl:text>
+        <xsl:if test="@xml:lang">
+            <xsl:text>\begin{otherlanguage}{</xsl:text>
+            <xsl:value-of select="myfunctions:iso_lang_to_language(@xml:lang)"/>
+            <xsl:text>}</xsl:text>
+        </xsl:if>
         <xsl:apply-templates mode="these"/>
+        <xsl:if test="@xml:lang">
+            <xsl:text>\end{otherlanguage}</xsl:text>
+        </xsl:if>
         <xsl:text>}</xsl:text>
     </xsl:template>
 
 
-    <xsl:template mode="these" match="tei:title[@type = 'article'] | tei:title[@type = 'section']">
+
+
+    <xsl:template mode="these" match="tei:title[@type = 'article'] | tei:title[@type = 'section'] | tei:title[@type = 'journal']">
         <xsl:text>\enquote{</xsl:text>
+        <xsl:if test="@xml:lang">
+            <xsl:text>\begin{otherlanguage}{</xsl:text>
+            <xsl:value-of select="myfunctions:iso_lang_to_language(@xml:lang)"/>
+            <xsl:text>}\textit{</xsl:text>
+        </xsl:if>
         <xsl:apply-templates mode="these"/>
+        <xsl:if test="@xml:lang">
+            <xsl:text>}\end{otherlanguage}</xsl:text>
+        </xsl:if>
         <xsl:text>}</xsl:text>
     </xsl:template>
 
@@ -1992,7 +1938,14 @@
         <xsl:text>}</xsl:text>
     </xsl:template>
 
-    <xsl:template mode="these" match="tei:ref[@type = 'interne'][not(@rend = 'numero')]">
+    <xsl:template mode="these" match="tei:ref[@type = 'interne'][@rend = 'page']">
+        <xsl:variable name="target" select="translate(@target, '#', '')"/>
+        <xsl:text>p. \pageref{</xsl:text>
+        <xsl:value-of select="$target"/>
+        <xsl:text>}</xsl:text>
+    </xsl:template>
+
+    <xsl:template mode="these" match="tei:ref[@type = 'interne'][not(@rend = 'numero') and not(@rend = 'page')]">
         <xsl:variable name="target" select="translate(@target, '#', '')"/>
         <xsl:choose>
             <xsl:when test="not(document($corpus_path)/descendant::node()[@xml:id = $target])">
@@ -2003,16 +1956,16 @@
                         <xsl:text>}</xsl:text>
                     </xsl:when>
                     <xsl:otherwise>
-                        <xsl:text>\ref{</xsl:text>
-                        <xsl:value-of select="$target"/>
-                        <xsl:text>}, p. \pageref{</xsl:text>
+                        <xsl:text>\vref{</xsl:text>
                         <xsl:value-of select="$target"/>
                         <xsl:text>}</xsl:text>
+                        <!--<xsl:text>, p. \pageref{</xsl:text>
+                        <xsl:value-of select="$target"/>
+                        <xsl:text>}</xsl:text>-->
                     </xsl:otherwise>
                 </xsl:choose>
             </xsl:when>
-            <xsl:when
-                test="not(document($corpus_path)//tei:*[@xml:id = $target][ancestor-or-self::tei:figure])">
+            <xsl:when test="not(document($corpus_path)//tei:*[@xml:id = $target][ancestor-or-self::tei:figure])">
                 <xsl:choose>
                     <!--À adapter pour pouvoir citer les notes de l'édition en temps voulu.-->
                     <xsl:when test="@rend = 'section'">
@@ -2041,8 +1994,7 @@
                             </xsl:otherwise>
                         </xsl:choose>
                     </xsl:when>
-                    <xsl:when
-                        test="document($corpus_path)/descendant::tei:*[@xml:id = $target][self::tei:note]">
+                    <xsl:when test="document($corpus_path)/descendant::tei:*[@xml:id = $target][self::tei:note]">
                         <xsl:choose>
                             <xsl:when
                                 test="document($corpus_path)/descendant::tei:*[@xml:id = $target][ancestor::tei:TEI[@type = 'transcription' or @type = 'edition']]">
@@ -2063,15 +2015,14 @@
                         </xsl:choose>
                     </xsl:when>
                     <xsl:when
-                        test="document($corpus_path)//tei:*[@xml:id = $target][self::tei:anchor[@type = 'ligne']]">
+                        test="document($corpus_path)//tei:*[@xml:id = $target][self::tei:anchor[@type = 'citation' or @type = 'ligne']]">
                         <xsl:text>page \edpageref{</xsl:text>
                         <xsl:value-of select="$target"/>
                         <xsl:text>}, ligne \edlineref{</xsl:text>
                         <xsl:value-of select="$target"/>
                         <xsl:text>}</xsl:text>
                     </xsl:when>
-                    <xsl:when
-                        test="document($corpus_path)//tei:*[@xml:id = $target][self::tei:anchor[@type = 'reference']]">
+                    <xsl:when test="document($corpus_path)//tei:*[@xml:id = $target][self::tei:anchor[@type = 'reference']]">
                         <xsl:text>page \pageref{</xsl:text>
                         <xsl:value-of select="$target"/>
                         <xsl:text>}</xsl:text>
@@ -2079,54 +2030,63 @@
                     <xsl:when
                         test="//tei:*[@xml:id = $target][ancestor::tei:TEI[@type = 'transcription']][ancestor-or-self::tei:div[@type = 'chapitre']]">
                         <xsl:text>chapitre </xsl:text>
-                        <xsl:value-of
-                            select="//tei:*[@xml:id = $target]/ancestor-or-self::tei:div[@type = 'chapitre']/@n"/>
+                        <xsl:value-of select="//tei:*[@xml:id = $target]/ancestor-or-self::tei:div[@type = 'chapitre']/@n"/>
                         <xsl:text>, page \pageref{</xsl:text>
                         <xsl:value-of select="$target"/>
                         <xsl:text>}</xsl:text>
                     </xsl:when>
                     <xsl:when test="//tei:*[@xml:id = $target][self::tei:table]">
-                        <xsl:text>tableau \ref{</xsl:text>
-                        <xsl:value-of select="$target"/>
-                        <xsl:text>}, p. \pageref{</xsl:text>
+                        <xsl:text>tableau \vref{</xsl:text>
                         <xsl:value-of select="$target"/>
                         <xsl:text>}</xsl:text>
+                        <xsl:if test="//tei:*[@xml:id = $target][contains(@rend, 'annexe')]">
+                            <xsl:text>, en annexe</xsl:text>
+                        </xsl:if>
+                        <!--<xsl:text>, p. \pageref{</xsl:text>
+                        <xsl:value-of select="$target"/>
+                        <xsl:text>}</xsl:text>-->
                     </xsl:when>
                     <xsl:otherwise>
-                        <xsl:text>``\nameref{</xsl:text>
+                        <xsl:text>\enquote{\nameref{</xsl:text>
                         <xsl:value-of select="$target"/>
-                        <xsl:text>}'', page \pageref{</xsl:text>
+                        <xsl:text>}}, page \pageref{</xsl:text>
                         <xsl:value-of select="$target"/>
                         <xsl:text>}</xsl:text>
                     </xsl:otherwise>
                 </xsl:choose>
             </xsl:when>
-            <xsl:when
-                test="//tei:*[@xml:id = $target][ancestor-or-self::tei:figure][descendant::tei:graphic]">
-                <xsl:text>figure \ref{</xsl:text>
+            <xsl:when test="//tei:*[@xml:id = $target][ancestor-or-self::tei:figure][descendant::tei:graphic]">
+                <xsl:text>figure \vref{</xsl:text>
                 <xsl:value-of select="$target"/>
                 <xsl:text>}</xsl:text>
-                <xsl:if test="//tei:*[@xml:id = $target][ancestor-or-self::tei:figure][@rend = 'annexe']">
+                <xsl:if test="//tei:*[@xml:id = $target][@rend = 'annexe']">
                     <xsl:text>, en annexe</xsl:text>
                 </xsl:if>
-                <xsl:text>, p. \pageref{</xsl:text>
+                <!--<xsl:text>, p. \pageref{</xsl:text>
                 <xsl:value-of select="translate(@target, '#', '')"/>
-                <xsl:text>}</xsl:text>
+                <xsl:text>}</xsl:text>-->
             </xsl:when>
             <xsl:when test="//tei:*[@xml:id = $target][ancestor-or-self::tei:table]">
-                <xsl:text>tableau \ref{</xsl:text>
-                <xsl:value-of select="$target"/>
-                <xsl:text>}, p. \pageref{</xsl:text>
+                <xsl:text>tableau \vref{</xsl:text>
                 <xsl:value-of select="$target"/>
                 <xsl:text>}</xsl:text>
+                <xsl:if test="//tei:*[@xml:id = $target][contains(@rend, 'annexe')]">
+                    <xsl:text>, en annexe</xsl:text>
+                </xsl:if>
+                <!--<xsl:text>, p. \pageref{</xsl:text>
+                <xsl:value-of select="$target"/>
+                <xsl:text>}</xsl:text>-->
             </xsl:when>
             <xsl:otherwise>
-                <xsl:text>figure \ref{</xsl:text>
+                <xsl:text>figure \vref{</xsl:text>
                 <xsl:value-of select="$target"/>
                 <xsl:text>}</xsl:text>
-                <xsl:text>, p. \pageref{</xsl:text>
+                <xsl:if test="//tei:*[@xml:id = $target][contains(@rend, 'annexe')]">
+                    <xsl:text>, en annexe</xsl:text>
+                </xsl:if>
+                <!--<xsl:text>, p. \pageref{</xsl:text>
                 <xsl:value-of select="translate(@target, '#', '')"/>
-                <xsl:text>}</xsl:text>
+                <xsl:text>}</xsl:text>-->
             </xsl:otherwise>
         </xsl:choose>
     </xsl:template>
@@ -2219,7 +2179,7 @@
             <xsl:otherwise>
                 <xsl:text>\footnote{\href{</xsl:text>
                 <xsl:value-of select="$echappement_url"/>
-                <xsl:text>}{</xsl:text>
+                <xsl:text>}{\csname NoAutoSpacing\endcsname </xsl:text>
                 <xsl:value-of select="$echappement_texte_url"/>
                 <xsl:text>}}</xsl:text>
             </xsl:otherwise>
@@ -2228,8 +2188,7 @@
 
     <xsl:template match="node()[contains(@rend, 'annexe')]" mode="these" priority="3"/>
 
-    <xsl:template mode="these" match="tei:graphic[not(parent::tei:figure[@rend = 'cote_a_cote'])]"
-        name="images">
+    <xsl:template mode="these" match="tei:graphic[not(parent::tei:figure[@rend = 'cote_a_cote'])]" name="images">
         <!--https://tex.stackexchange.com/a/8633-->
         <xsl:text>\adjincludegraphics[</xsl:text>
         <xsl:choose>
@@ -2275,8 +2234,7 @@
 
 
 
-    <xsl:template mode="these annexe"
-        match="tei:table[not(contains(@rend, 'paysage'))][not(@rend = 'cote_a_cote')]">
+    <xsl:template mode="these annexe" match="tei:table[not(contains(@rend, 'paysage'))][not(@rend = 'cote_a_cote')]">
         <xsl:variable name="table_type">
             <xsl:choose>
                 <xsl:when test="contains(@rend, 'long')">
@@ -2400,8 +2358,7 @@
                                 <xsl:text>]</xsl:text>
                             </xsl:if>
                             <xsl:text>{</xsl:text>
-                            <xsl:apply-templates select="descendant::tei:desc[not(@type = 'short')]"
-                                mode="these"/>
+                            <xsl:apply-templates select="descendant::tei:desc[not(@type = 'short')]" mode="these"/>
                             <xsl:text>}</xsl:text>
                         </xsl:if>
                         <xsl:if test="@xml:id">
@@ -2421,8 +2378,7 @@
                                 <xsl:text>]</xsl:text>
                             </xsl:if>
                             <xsl:text>{</xsl:text>
-                            <xsl:apply-templates select="descendant::tei:desc[not(@type = 'short')]"
-                                mode="these"/>
+                            <xsl:apply-templates select="descendant::tei:desc[not(@type = 'short')]" mode="these"/>
                             <xsl:text>}</xsl:text>
                         </xsl:if>
                         <xsl:if test="@xml:id">
@@ -2447,8 +2403,7 @@
     </xsl:template>
 
 
-    <xsl:template mode="these annexe"
-        match="tei:table[contains(@rend, 'paysage')][not(@rend = 'cote_a_cote')]">
+    <xsl:template mode="these annexe" match="tei:table[contains(@rend, 'paysage')][not(@rend = 'cote_a_cote')]">
         <xsl:variable name="table_type">
             <xsl:choose>
                 <xsl:when test="contains(@rend, 'long')">
@@ -2575,8 +2530,7 @@
                                 <xsl:text>]</xsl:text>
                             </xsl:if>
                             <xsl:text>{</xsl:text>
-                            <xsl:apply-templates select="descendant::tei:desc[not(@type = 'short')]"
-                                mode="these"/>
+                            <xsl:apply-templates select="descendant::tei:desc[not(@type = 'short')]" mode="these"/>
                             <xsl:text>}</xsl:text>
                         </xsl:if>
                         <xsl:if test="@xml:id">
@@ -2596,8 +2550,7 @@
                                 <xsl:text>]</xsl:text>
                             </xsl:if>
                             <xsl:text>{</xsl:text>
-                            <xsl:apply-templates select="descendant::tei:desc[not(@type = 'short')]"
-                                mode="these"/>
+                            <xsl:apply-templates select="descendant::tei:desc[not(@type = 'short')]" mode="these"/>
                             <xsl:text>}</xsl:text>
                         </xsl:if>
                         <xsl:if test="@xml:id">
@@ -2662,6 +2615,42 @@
         <!--Pas universel, voir comment régler ça.-->
     </xsl:template>
 
+    <xsl:function name="myfunctions:iso_lang_to_language">
+        <xsl:param name="iso_lang"/>
+        <xsl:choose>
+            <xsl:when test="$iso_lang = 'lat'">latin</xsl:when>
+            <xsl:when test="$iso_lang = 'eng'">english</xsl:when>
+            <xsl:when test="$iso_lang = 'spo' or $iso_lang = 'spa' or $iso_lang = 'cat'">spanish</xsl:when>
+            <xsl:otherwise>french</xsl:otherwise>
+        </xsl:choose>
+    </xsl:function>
+
+    <xsl:function name="myfunctions:escape_code">
+        <xsl:param name="input"/>
+        <xsl:variable name="v1">
+            <xsl:value-of select="replace($input, '&amp;', concat('\\', $and))" disable-output-escaping="yes"/>
+        </xsl:variable>
+        <xsl:variable name="v2">
+            <xsl:value-of select="replace($v1, '\s+', ' ')" disable-output-escaping="yes"/>
+        </xsl:variable>
+        <xsl:variable name="v3">
+            <xsl:value-of select="replace($v2, '%', '\\%')" disable-output-escaping="yes"/>
+        </xsl:variable>
+        <xsl:variable name="v4">
+            <xsl:value-of select="replace($v3, '\{', '\\{')" disable-output-escaping="yes"/>
+        </xsl:variable>
+        <xsl:variable name="v5">
+            <xsl:value-of select="replace($v4, '\^', '\\^ ')" disable-output-escaping="yes"/>
+        </xsl:variable>
+        <xsl:variable name="v6">
+            <xsl:value-of select="replace($v5, '_', '\\_')" disable-output-escaping="yes"/>
+        </xsl:variable>
+        <xsl:variable name="v7">
+            <xsl:value-of select="replace($v6, '\}', '\\}')" disable-output-escaping="yes"/>
+        </xsl:variable>
+        <xsl:value-of select="$v7" disable-output-escaping="yes"/>
+    </xsl:function>
+
     <xsl:function name="myfunctions:print_abbr_usages">
         <xsl:param name="witness"/>
         <!--The witness to treat-->
@@ -2714,14 +2703,12 @@
         </xsl:variable>
 
         <xsl:variable name="file_path">
-            <xsl:value-of
-                select="base-uri(doc($corpus_path)/descendant::tei:body/tei:div/descendant::node()[@xml:id = $anchor])"
+            <xsl:value-of select="base-uri(doc($corpus_path)/descendant::tei:body/tei:div/descendant::node()[@xml:id = $anchor])"
             />
         </xsl:variable>
 
 
-        <xsl:variable name="corresponding_wit_n"
-            select="$corresponding_element/ancestor::tei:div[@type = 'chapitre']/@n"/>
+        <xsl:variable name="corresponding_wit_n" select="$corresponding_element/ancestor::tei:div[@type = 'chapitre']/@n"/>
         <xsl:variable name="glose_ou_traduction"
             select="$corresponding_element/ancestor::tei:div[@type = 'glose' or @type = 'traduction']/@type"/>
         <xsl:variable name="collated_file_path">
@@ -2769,8 +2756,7 @@
 
         <!--On va donc chercher dans le fichier xml source, en attendant la collation.-->
         <!--                <xsl:text>Cas 2&#10;</xsl:text>-->
-        <xsl:apply-templates select="doc($file_path)/descendant::node()[@xml:id = $anchor]/node()"
-            mode="citation_apparat">
+        <xsl:apply-templates select="doc($file_path)/descendant::node()[@xml:id = $anchor]/node()" mode="citation_apparat">
             <xsl:with-param tunnel="yes" name="temoin_base_citation" select="$corresponding_wit_id"/>
         </xsl:apply-templates>
 
@@ -2787,18 +2773,16 @@
                 <xsl:text> </xsl:text>
                 <xsl:value-of select="$corresponding_pb"/>
                 <xsl:choose>
-                    <xsl:when
-                        test="contains(@rend, 'sans_apparat') and not($temoin_base_edition = $corresponding_wit_id)"/>
+                    <xsl:when test="contains(@rend, 'sans_apparat') and not($temoin_base_edition = $corresponding_wit_id)"/>
                     <xsl:otherwise>
-                        <xsl:text>; éd. p. \edpageref{</xsl:text>
+                        <xsl:text>, éd. p. \edpageref{</xsl:text>
                         <xsl:value-of select="$anchor"/>
                         <xsl:text>}</xsl:text>
                     </xsl:otherwise>
                 </xsl:choose>
                 <xsl:text>\rbrack </xsl:text>
             </xsl:when>
-            <xsl:when
-                test="document($corpus_path)/descendant::tei:TEI[@xml:id = 'Rome_W']/descendant::node()[@xml:id = $anchor]">
+            <xsl:when test="document($corpus_path)/descendant::tei:TEI[@xml:id = 'Rome_W']/descendant::node()[@xml:id = $anchor]">
                 <xsl:text> \lbrack\cite{</xsl:text>
                 <xsl:value-of select="$corresponding_wit_id"/>
                 <xsl:text>}, III‑3‑</xsl:text>
@@ -2807,7 +2791,7 @@
                 <xsl:value-of select="$folio_or_page"/>
                 <xsl:text> </xsl:text>
                 <xsl:value-of select="$corresponding_pb"/>
-                <xsl:text>; transcription ann. p. \edpageref{</xsl:text>
+                <xsl:text>, transcription ann. p. \edpageref{</xsl:text>
                 <xsl:value-of select="$anchor"/>
                 <xsl:text>}\rbrack </xsl:text>
             </xsl:when>
@@ -2833,10 +2817,9 @@
                 <xsl:text> </xsl:text>
                 <xsl:value-of select="$corresponding_pb"/>
                 <xsl:choose>
-                    <xsl:when
-                        test="contains(@rend, 'sans_apparat') and not($temoin_base_edition = $corresponding_wit_id)"/>
+                    <xsl:when test="contains(@rend, 'sans_apparat') and not($temoin_base_edition = $corresponding_wit_id)"/>
                     <xsl:otherwise>
-                        <xsl:text>; éd. p. \edpageref{</xsl:text>
+                        <xsl:text>, éd. p. \edpageref{</xsl:text>
                         <xsl:value-of select="$anchor"/>
                         <xsl:text>}</xsl:text>
                     </xsl:otherwise>
@@ -2904,8 +2887,7 @@
                 </xsl:otherwise>
             </xsl:choose>-->
         </xsl:variable>
-        <xsl:variable name="corresponding_wit_n"
-            select="$corresponding_element/ancestor::tei:div[@type = 'chapitre']/@n"/>
+        <xsl:variable name="corresponding_wit_n" select="$corresponding_element/ancestor::tei:div[@type = 'chapitre']/@n"/>
         <xsl:variable name="glose_ou_traduction"
             select="$corresponding_element/ancestor::tei:div[@type = 'glose' or @type = 'traduction']/@type"/>
         <xsl:variable name="collated_file_path">
@@ -2922,7 +2904,7 @@
                 </xsl:when>
                 <xsl:otherwise>
                     <xsl:value-of
-                        select="concat('/home/mgl/Bureau/These/Edition/collator/results/', $corresponding_wit_id, '.xml')"/>
+                        select="concat('/home/mgl/Bureau/These/Edition/hyperregimiento-de-los-principes/Dedans/XML/edition/temoins/', $corresponding_wit_id, '.xml')"/>
                     <!--Changer ici pour utiliser l'arbre reconstruit-->
                 </xsl:otherwise>
             </xsl:choose>
@@ -2941,6 +2923,7 @@
         </xsl:variable>
 
         <xsl:choose>
+            <xsl:when test="@rend = 'inline'">\enquote{\begin{otherlanguage}{spanish}\textit{</xsl:when>
             <xsl:when test="not(ancestor::tei:table[@rend = 'cote_a_cote'])">
                 <xsl:text>\par
             %
@@ -2983,8 +2966,7 @@
                 <xsl:apply-templates
                     select="doc($collated_file_path)/descendant::node()[self::tei:p[@n = $corresponding_div] | self::tei:head[ancestor::tei:div[@type = 'chapitre'][@n = $corresponding_wit_n]]]/child::node()[preceding::tei:anchor[@xml:id = $beginning_anchor]][following::tei:anchor[@xml:id = $ending_anchor]]"
                     mode="citation_apparat">
-                    <xsl:with-param name="temoin_base_citation" select="$corresponding_wit_id"
-                        tunnel="yes"/>
+                    <xsl:with-param name="temoin_base_citation" select="$corresponding_wit_id" tunnel="yes"/>
                     <xsl:with-param name="debug" tunnel="yes" select="$debug"/>
                 </xsl:apply-templates>
             </xsl:when>
@@ -2999,8 +2981,7 @@
                         <xsl:apply-templates
                             select="doc($collated_file_path)/descendant::node()[self::tei:p[@n = $corresponding_div] | self::tei:head[ancestor::tei:div[@type = 'chapitre'][@n = $corresponding_wit_n]]]/child::node()[preceding::tei:anchor[@xml:id = $beginning_anchor]][following::tei:anchor[@xml:id = $ending_anchor]]"
                             mode="sans_apparat">
-                            <xsl:with-param name="temoin_base" tunnel="yes"
-                                select="$corresponding_wit_id"/>
+                            <xsl:with-param name="temoin_base" tunnel="yes" select="$corresponding_wit_id"/>
                         </xsl:apply-templates>
                     </xsl:when>
                     <xsl:otherwise>
@@ -3013,6 +2994,20 @@
         </xsl:choose>
 
         <xsl:choose>
+            <xsl:when test="@rend = 'inline'">
+                <xsl:text>\footnote{\cite{</xsl:text>
+                <xsl:value-of select="$corresponding_wit_id"/>
+                <xsl:text>}, III‑3‑</xsl:text>
+                <xsl:value-of select="$corresponding_wit_n"/>
+                <xsl:text>, </xsl:text>
+                <xsl:value-of select="$folio_or_page"/>
+                <xsl:text> </xsl:text>
+                <xsl:value-of select="$corresponding_pb"/>
+                <xsl:text>, éd. p. \edpageref{</xsl:text>
+                <xsl:value-of select="$beginning_anchor"/>
+                <xsl:text>}</xsl:text>
+                <xsl:text>.}</xsl:text>
+            </xsl:when>
             <xsl:when test="
                     document($corpus_path)/descendant::tei:head/descendant::tei:anchor[@xml:id = $beginning_anchor]
                     | document($corpus_path)/descendant::tei:TEI[@xml:id = 'Val_S']/descendant::tei:anchor[@xml:id = $beginning_anchor]">
@@ -3025,10 +3020,9 @@
                 <xsl:text> </xsl:text>
                 <xsl:value-of select="$corresponding_pb"/>
                 <xsl:choose>
-                    <xsl:when
-                        test="contains(@rend, 'sans_apparat') and not($temoin_base_edition = $corresponding_wit_id)"/>
+                    <xsl:when test="contains(@rend, 'sans_apparat') and not($temoin_base_edition = $corresponding_wit_id)"/>
                     <xsl:otherwise>
-                        <xsl:text>; éd. p. \edpageref{</xsl:text>
+                        <xsl:text>, éd. p. \edpageref{</xsl:text>
                         <xsl:value-of select="$beginning_anchor"/>
                         <xsl:text>}</xsl:text>
                     </xsl:otherwise>
@@ -3045,7 +3039,7 @@
                 <xsl:value-of select="$folio_or_page"/>
                 <xsl:text> </xsl:text>
                 <xsl:value-of select="$corresponding_pb"/>
-                <xsl:text>; transcription ann. p. \edpageref{</xsl:text>
+                <xsl:text>, transcr. ann. p. \edpageref{</xsl:text>
                 <xsl:value-of select="$beginning_anchor"/>
                 <xsl:text>}\rbrack </xsl:text>
             </xsl:when>
@@ -3071,10 +3065,9 @@
                 <xsl:text> </xsl:text>
                 <xsl:value-of select="$corresponding_pb"/>
                 <xsl:choose>
-                    <xsl:when
-                        test="contains(@rend, 'sans_apparat') and not($temoin_base_edition = $corresponding_wit_id)"/>
+                    <xsl:when test="contains(@rend, 'sans_apparat') and not($temoin_base_edition = $corresponding_wit_id)"/>
                     <xsl:otherwise>
-                        <xsl:text>; éd. p. \edpageref{</xsl:text>
+                        <xsl:text>, éd. p. \edpageref{</xsl:text>
                         <xsl:value-of select="$beginning_anchor"/>
                         <xsl:text>}</xsl:text>
                     </xsl:otherwise>
@@ -3087,6 +3080,7 @@
         </xsl:if>
 
         <xsl:choose>
+            <xsl:when test="@rend = 'inline'">}\end{otherlanguage}}</xsl:when>
             <xsl:when test="not(ancestor::tei:table[@rend = 'cote_a_cote'])">
                 <xsl:text>  
         \pend
@@ -3140,16 +3134,20 @@
         <xsl:variable name="sub1" select="replace(., '⁊', 'e')"/>
         <xsl:variable name="sub2" select="replace($sub1, ' ', ' ')"/>
         <xsl:variable name="sub3">
-            <xsl:value-of select="replace($sub2, '&amp;', concat('\\', $and))"
-                disable-output-escaping="yes"/>
+            <xsl:value-of select="replace($sub2, '&amp;', concat('\\', $and))" disable-output-escaping="yes"/>
         </xsl:variable>
         <xsl:variable name="sub4" select="replace($sub3, '%', '\\%')"/>
         <xsl:variable name="sub5" select="replace($sub4, '_', '\\_')"/>
         <!--On échappe les accolades parce que ça doit être considéré comme de la REGEX sinon-->
         <xsl:variable name="sub6" select="replace($sub5, '\{', '\\{')"/>
         <xsl:variable name="sub7" select="replace($sub6, '\}', '\\}')"/>
+        <xsl:variable name="sub8" select="replace($sub7, 'α ', '\\textalpha\\ ')"/>
+        <xsl:variable name="sub9" select="replace($sub8, 'β ', '\\textbeta\\ ')"/>
+        <xsl:variable name="sub10" select="replace($sub9, 'α([,;\}\.!\?])', '\\textalpha$1')"/>
+        <xsl:variable name="sub11" select="replace($sub10, 'β([,;\}\.!\?])', '\\textbeta$1')"/>
+        <xsl:variable name="sub12" select="replace($sub11, '#', '\\#')"/>
         <!--On échappe les accolades parce que ça doit être considéré comme de la REGEX sinon-->
-        <xsl:value-of select="$sub7"/>
+        <xsl:value-of select="$sub12"/>
     </xsl:template>
 
     <xsl:template match="tei:lb" mode="these">
