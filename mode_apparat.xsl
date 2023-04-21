@@ -171,7 +171,7 @@
 
     <xsl:template match="
             tei:app[contains(@ana, '#lexicale')][count(descendant::tei:rdg) = 1]
-            | tei:app[contains(@ana, '#morphosyntactique')][count(descendant::tei:rdg) = 1]
+            | tei:app[contains(@ana, '#morphosyntaxique')][count(descendant::tei:rdg) = 1]
             | tei:app[contains(@ana, '#indetermine')][count(descendant::tei:rdg) = 1]" mode="citation_apparat">
         <xsl:param name="temoin_base_citation" tunnel="yes"/>
         <xsl:text> </xsl:text>
@@ -182,7 +182,7 @@
     <!--  <xsl:template match="
             tei:app[contains(@ana, '#entite_nommee')][count(descendant::tei:rdg) > 1]
             | tei:app[contains(@ana, '#lexicale')][count(descendant::tei:rdg) > 1]
-            | tei:app[contains(@ana, '#morphosyntactique')][count(descendant::tei:rdg) > 1]
+            | tei:app[contains(@ana, '#morphosyntaxique')][count(descendant::tei:rdg) > 1]
             | tei:app[contains(@ana, '#indetermine')][count(descendant::tei:rdg) > 1]
             | tei:app[contains(@ana, '#personne')][count(descendant::tei:rdg) > 1]
             | tei:app[contains(@ana, '#genre')][count(descendant::tei:rdg) > 1]"
@@ -305,13 +305,7 @@
         </xsl:if>
     </xsl:template>
 
-    <xsl:template match="tei:app" mode="sans_apparat">
-        <xsl:param name="temoin_base" tunnel="yes"/>
-        <xsl:if test="descendant::tei:rdg[contains(@wit, $temoin_base)]/tei:w">
-            <xsl:text> </xsl:text>
-            <xsl:apply-templates select="descendant::tei:rdg[contains(@wit, $temoin_base)]/tei:w"/>
-        </xsl:if>
-    </xsl:template>
+
 
 
 
@@ -476,7 +470,7 @@
     <xsl:template match="
             tei:app[contains(@ana, '#entite_nommee')][count(descendant::tei:rdg) > 1]
             | tei:app[contains(@ana, '#lexicale')][count(descendant::tei:rdg) > 1]
-            | tei:app[contains(@ana, '#morphosyntactique')][count(descendant::tei:rdg) > 1]
+            | tei:app[contains(@ana, '#morphosyntaxique')][count(descendant::tei:rdg) > 1]
             | tei:app[contains(@ana, '#indetermine')][count(descendant::tei:rdg) > 1]
             | tei:app[contains(@ana, '#personne')][count(descendant::tei:rdg) > 1]
             | tei:app[contains(@ana, '#genre')][count(descendant::tei:rdg) > 1]
@@ -554,6 +548,66 @@
             </xsl:if>
         </xsl:if>
 
+    </xsl:template>
+
+    <xsl:template mode="sans_apparat" match="tei:app">
+        <xsl:param name="temoin_base_citation" tunnel="yes"/>
+        <xsl:apply-templates select="descendant::tei:rdg[contains(@wit, $temoin_base_citation)]" mode="sans_apparat"/>
+        <xsl:text> </xsl:text>
+    </xsl:template>
+
+    <xsl:template match="tei:rdg" mode="sans_apparat">
+        <xsl:param name="temoin_base_citation" tunnel="yes"/>
+        <xsl:apply-templates select="descendant::tei:w"/>
+        <xsl:apply-templates select="tei:pc[contains(@corresp, $temoin_base_citation)]"/>
+    </xsl:template>
+
+    <xsl:template mode="sans_apparat" match="tei:note"/>
+
+
+    <xsl:template match="tei:w" mode="marques_lecture">
+        <xsl:apply-templates mode="edition"/>
+        <xsl:if test="not(following-sibling::node()[1][self::tei:pc or self::tei:add])">
+            <xsl:text> </xsl:text>
+        </xsl:if>
+    </xsl:template>
+    <xsl:template match="tei:pc" mode="marques_lecture">
+        <xsl:apply-templates/>
+        <xsl:text> </xsl:text>
+    </xsl:template>
+
+    <xsl:template match="tei:note" mode="marques_lecture"/>
+
+    <xsl:template match="tei:add[@type = 'correction']" mode="marques_lecture">
+        <xsl:text> </xsl:text>
+        <xsl:apply-templates mode="marques_lecture"/>
+        <xsl:text> </xsl:text>
+    </xsl:template>
+
+    <xsl:template match="descendant::tei:add[@type = 'commentaire'][not(@rend = 'cacher')]" mode="marques_lecture">
+        <xsl:variable name="id" select="@xml:id"/>
+        <xsl:variable name="wit" select="myfunctions:witstosigla(@corresp)"/>
+        <xsl:text>\footnoteA{</xsl:text>
+        <xsl:text>Ajout d'une main</xsl:text>
+        <xsl:choose>
+            <xsl:when test="@place = 'margin'">
+                <xsl:text> en marge</xsl:text>
+            </xsl:when>
+            <xsl:when test="@place = 'intercolumn'">
+                <xsl:text> dans l'intercolonne</xsl:text>
+            </xsl:when>
+            <xsl:when test="@place = 'bottom'">
+                <xsl:text> en bas de page</xsl:text>
+            </xsl:when>
+            <xsl:when test="@place = 'inline'">
+                <xsl:text> en ligne</xsl:text>
+            </xsl:when>
+        </xsl:choose>
+        <xsl:text> sur le témoin </xsl:text>
+        <xsl:value-of select="$wit"/>
+        <xsl:text>: \enquote{</xsl:text>
+        <xsl:apply-templates mode="edition"/>
+        <xsl:text>}} </xsl:text>
     </xsl:template>
 
 

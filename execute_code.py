@@ -34,8 +34,13 @@ def execute():
     parser = etree.XMLParser(load_dtd=True, resolve_entities=True)
     with open("/home/mgl/Bureau/These/Edition/hyperregimiento-de-los-principes/Dedans/XML/corpus/these.xml",
               "r") as these:
-        parsed_these = etree.parse(these, parser=parser)
-    parsed_these.xinclude()
+        try:
+            parsed_these = etree.parse(these, parser=parser)
+            parsed_these.xinclude()
+        except lxml.etree.XIncludeError: 
+            print("Something went wrong with the XML input. Please check validity.")
+            exit(1)
+        
     last_commit_p = parsed_these.xpath("//tei:p[@xml:id='dernier_commit']", namespaces=NSMAP)[0]
     last_commit_p.set("n", get_last_commit())
 
@@ -84,7 +89,6 @@ def execute():
             result = str(result)
 
         instruction.text =  gestion_type_donnees(result, round_value=round_value)
-
     with open(".tmp/these_tmp.xml", "w") as output_these:
         output = etree.tostring(parsed_these, pretty_print=True, encoding='utf-8', xml_declaration=True).decode('utf8')
         # Test pour gérer l'indentation du xml à imprimer tel quel: échec.
@@ -128,6 +132,8 @@ def replace_ampersands():
         with open(file, 'r') as fichier_these:
             these_as_string = "".join(fichier_these.readlines())
             translated = these_as_string.replace("&amp;", "&").replace("AMPERSAND", "\&")
+            translated = these_as_string.replace(" }", "}").replace("{ ", "{")
+            translated = these_as_string.replace(" \edtext{}", "\edtext{}")
             # translated = these_as_string
         os.remove(file)
         with open(file, "w") as output_file:
