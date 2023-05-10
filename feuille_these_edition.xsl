@@ -363,7 +363,7 @@
 
     <xsl:template match="tei:sic[not(@ana = '#omission')][not(preceding-sibling::tei:corr or following-sibling::tei:corr)]"
         mode="#all">
-        <xsl:apply-templates mode="edition"/>
+        <xsl:apply-templates mode="#current"/>
         <xsl:text>\textsuperscript{\textit{[sic]}}</xsl:text>
     </xsl:template>
 
@@ -417,6 +417,7 @@
 
     <xsl:template match="tei:div[@type = 'chapitre']" mode="edition_texte_latin">
         <xsl:text>
+            \phantomsection
             \section*{</xsl:text>
         <xsl:apply-templates select="tei:head"/>
         <xsl:text>\footnoteA{Le chapitre correspondant de l'édition se trouve p. \pageref{chapter:</xsl:text>
@@ -425,7 +426,6 @@
         <xsl:text>}\label{</xsl:text>
         <xsl:value-of select="@xml:id"/>
         <xsl:text>}</xsl:text>
-        <xsl:text>\phantomsection</xsl:text>
         <xsl:text>\stepcounter{section}</xsl:text>
         <xsl:text>\addcontentsline{toc}{section}{Chapitre </xsl:text>
         <xsl:value-of select="@n"/>
@@ -536,8 +536,6 @@
         <xsl:variable name="string_base_witness">
             <xsl:apply-templates mode="apparat" select="descendant::tei:rdg[contains(@wit, $temoin_base)]/tei:w"/>
         </xsl:variable>
-        <xsl:message select="$string_base_witness"/>
-        <xsl:message select="$string_current_wit"/>
         <xsl:text>\edtext{}{\lemma{</xsl:text>
         <xsl:text>}\Bfootnote[nonum]{-- </xsl:text>
         <xsl:if test="(contains(@ana, 'graphique') or contains(@ana, 'filtre')) and $string_current_wit != $string_base_witness">
@@ -628,7 +626,7 @@
         <xsl:choose>
             <xsl:when test="not(@type)">
                 <xsl:text>\enquote{</xsl:text>
-                <xsl:apply-templates mode="edition"/>
+                <xsl:apply-templates mode="#current"/>
                 <xsl:text>}</xsl:text>
             </xsl:when>
             <xsl:otherwise>
