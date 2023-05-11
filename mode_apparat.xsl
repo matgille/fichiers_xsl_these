@@ -11,6 +11,7 @@
 
 
     <xsl:template match="tei:hi[@rend = 'initiale' or @rend = 'non_initiale']" mode="apparat omission_simple">
+        <xsl:param name="temoin_base_edition" tunnel="yes"/>
         <xsl:value-of select="."/>
     </xsl:template>
 
@@ -20,6 +21,7 @@
 
     <xsl:template mode="apparat omission_simple"
         match="tei:note[@subtype = 'lexicale'][not(parent::tei:head)] | tei:note[@type = 'particulier'] | tei:note[@type = 'general'] | tei:note[@type = 'sources']">
+        <xsl:param name="temoin_base_edition" tunnel="yes"/>
         <xsl:text>\footnote</xsl:text>
         <xsl:choose>
             <xsl:when test="ancestor::tei:TEI[@subtype = 'version_a']">
@@ -81,6 +83,7 @@
     </xsl:template>
 
     <xsl:template match="tei:quote[@type = 'primaire']" mode="apparat omission_simple">
+        <xsl:param name="temoin_base_edition" tunnel="yes"/>
         <xsl:variable name="langue">
             <xsl:choose>
                 <xsl:when test="@xml:lang = 'lat'">latin</xsl:when>
@@ -140,6 +143,7 @@
 
 
     <xsl:template match="tei:app[@ana = '#not_apparat']" mode="apparat rdg_apparat omission_simple citation_apparat">
+        <xsl:param name="temoin_base_edition" tunnel="yes"/>
         <xsl:param name="temoin_base_citation" tunnel="yes"/>
         <xsl:text> </xsl:text>
         <xsl:apply-templates select="descendant::tei:rdg[contains(@wit, $temoin_base_citation)]" mode="citation_apparat"/>
@@ -150,6 +154,7 @@
     <xsl:template
         match="tei:app[contains(@ana, '#transposition')] | tei:app[@ana = '#numerale'] | tei:app[@ana = '#graphique'][not(contains(@ana, '#omission'))] | tei:app[contains(@ana, '#filtre')][not(contains(@ana, '#omission'))][count(descendant::tei:rdg) = 1] | tei:app[contains(@ana, '#auxiliarite')][not(contains(@ana, '#omission'))] | tei:app[contains(@ana, '#normalisation')][not(contains(@ana, '#omission'))]"
         mode="citation_apparat">
+        <xsl:param name="temoin_base_edition" tunnel="yes"/>
         <xsl:param name="temoin_base_citation" tunnel="yes"/>
         <xsl:text> </xsl:text>
         <xsl:apply-templates select="descendant::tei:rdg[contains(@wit, $temoin_base_citation)]" mode="citation_apparat"/>
@@ -163,6 +168,7 @@
 
     <xsl:template match="tei:app[contains(@ana, '#filtre')][count(descendant::tei:rdg) > 1][not(contains(@ana, '#omission'))]"
         mode="citation_apparat">
+        <xsl:param name="temoin_base_edition" tunnel="yes"/>
         <xsl:param name="temoin_base_citation" tunnel="yes"/>
         <xsl:text> </xsl:text>
         <xsl:apply-templates select="descendant::tei:rdg[contains(@wit, $temoin_base_citation)]" mode="citation_apparat"/>
@@ -173,6 +179,7 @@
             tei:app[contains(@ana, '#lexicale')][count(descendant::tei:rdg) = 1]
             | tei:app[contains(@ana, '#morphosyntaxique')][count(descendant::tei:rdg) = 1]
             | tei:app[contains(@ana, '#indetermine')][count(descendant::tei:rdg) = 1]" mode="citation_apparat">
+        <xsl:param name="temoin_base_edition" tunnel="yes"/>
         <xsl:param name="temoin_base_citation" tunnel="yes"/>
         <xsl:text> </xsl:text>
         <xsl:apply-templates mode="citation_apparat"/>
@@ -216,6 +223,7 @@
     <xsl:template
         match="tei:app[@ana = '#graphique'] | tei:app[@ana = '#filtre'][count(descendant::tei:rdg) = 1] | tei:app[@ana = '#auxiliarite']"
         mode="citation_apparat">
+        <xsl:param name="temoin_base_edition" tunnel="yes"/>
         <xsl:param name="temoin_base_citation" tunnel="yes"/>
         <xsl:apply-templates select="descendant::tei:rdg[contains(@wit, $temoin_base_citation)]"/>
         <xsl:if test="following::node()[1][self::tei:app[descendant::tei:rdg[contains(@wit, $temoin_base_citation)][node()]]]">
@@ -226,6 +234,7 @@
     </xsl:template>
 
     <xsl:template match="tei:w[not(ancestor::tei:app)]" mode="citation_apparat">
+        <xsl:param name="temoin_base_edition" tunnel="yes"/>
         <!--Dans le cas de citations du texte transcrit et non édité-->
         <xsl:text> </xsl:text>
         <xsl:apply-templates mode="citation_apparat"/>
@@ -238,6 +247,7 @@
 
     <xsl:template match="tei:app[contains(@ana, '#omission')][contains(@ana, '#filtre') or contains(@ana, '#normalisation')]"
         priority="1" mode="citation_apparat">
+        <xsl:param name="temoin_base_edition" tunnel="yes"/>
         <!--Filtre avec omission: on imprime l'omission et tous les témoins regroupés sans tenir compte des apparats-->
         <xsl:param name="temoin_base_citation" tunnel="yes"/>
         <xsl:param name="debug" tunnel="yes"/>
@@ -310,6 +320,7 @@
 
 
     <xsl:template match="tei:app[contains(@ana, '#omission')][contains(@ana, '#graphique')]" priority="1" mode="citation_apparat">
+        <xsl:param name="temoin_base_edition" tunnel="yes"/>
         <!--Si #omission est la seule valeur de l'analyse, alors il s'agit d'une omission binaire (un témoin ou un groupe omet du texte;
         les autres témoins concordent complètement)-->
         <xsl:param name="temoin_base_citation" tunnel="yes"/>
@@ -382,6 +393,7 @@
     </xsl:template>
 
     <xsl:template match="tei:app[@ana = '#omission']" mode="citation_apparat" priority="1">
+        <xsl:param name="temoin_base_edition" tunnel="yes"/>
         <!--Si #omission est la seule valeur de l'analyse, alors il s'agit d'une omission binaire (un témoin ou un groupe omet du texte;
         les autres témoins concordent complètement)-->
         <xsl:param name="temoin_base_citation" tunnel="yes"/>
@@ -442,6 +454,7 @@
 
 
     <xsl:template match="tei:sic[not(@ana = '#omission')]" mode="citation_apparat">
+        <xsl:param name="temoin_base_edition" tunnel="yes"/>
         <xsl:apply-templates mode="citation_apparat"/>
         <xsl:text>\textsuperscript{\textit{[sic]}}</xsl:text>
     </xsl:template>
@@ -452,6 +465,7 @@
     <xsl:template
         match="tei:app[@ana = '#graphique'] | tei:app[@ana = '#filtre'][count(descendant::tei:rdg) = 1] | tei:app[@ana = '#auxiliarite']"
         mode="citation_apparat" priority="1">
+        <xsl:param name="temoin_base_edition" tunnel="yes"/>
         <xsl:param name="temoin_base_citation" tunnel="yes"/>
         <xsl:text> %TEST&#10;</xsl:text>
         <xsl:apply-templates select="descendant::tei:rdg[contains(@wit, $temoin_base_citation)]" mode="citation_apparat"/>
@@ -475,6 +489,7 @@
             | tei:app[contains(@ana, '#personne')][count(descendant::tei:rdg) > 1]
             | tei:app[contains(@ana, '#genre')][count(descendant::tei:rdg) > 1]
             " mode="citation_apparat">
+        <xsl:param name="temoin_base_edition" tunnel="yes"/>
         <xsl:param name="temoin_base_citation" tunnel="yes"/>
         <xsl:param name="debug" tunnel="yes"/>
         <xsl:if test="$debug = 'True'">
@@ -551,12 +566,14 @@
     </xsl:template>
 
     <xsl:template mode="sans_apparat" match="tei:app">
+        <xsl:param name="temoin_base_edition" tunnel="yes"/>
         <xsl:param name="temoin_base_citation" tunnel="yes"/>
         <xsl:apply-templates select="descendant::tei:rdg[contains(@wit, $temoin_base_citation)]" mode="sans_apparat"/>
         <xsl:text> </xsl:text>
     </xsl:template>
 
     <xsl:template match="tei:rdg" mode="sans_apparat">
+        <xsl:param name="temoin_base_edition" tunnel="yes"/>
         <xsl:param name="temoin_base_citation" tunnel="yes"/>
         <xsl:apply-templates select="descendant::tei:w"/>
         <xsl:apply-templates select="tei:pc[contains(@corresp, $temoin_base_citation)]"/>
@@ -566,12 +583,14 @@
 
 
     <xsl:template match="tei:w" mode="marques_lecture">
+        <xsl:param name="temoin_base_edition" tunnel="yes"/>
         <xsl:apply-templates mode="edition"/>
         <xsl:if test="not(following-sibling::node()[1][self::tei:pc or self::tei:add])">
             <xsl:text> </xsl:text>
         </xsl:if>
     </xsl:template>
     <xsl:template match="tei:pc" mode="marques_lecture">
+        <xsl:param name="temoin_base_edition" tunnel="yes"/>
         <xsl:apply-templates/>
         <xsl:text> </xsl:text>
     </xsl:template>
@@ -579,12 +598,14 @@
     <xsl:template match="tei:note" mode="marques_lecture"/>
 
     <xsl:template match="tei:add[@type = 'correction']" mode="marques_lecture">
+        <xsl:param name="temoin_base_edition" tunnel="yes"/>
         <xsl:text> </xsl:text>
         <xsl:apply-templates mode="marques_lecture"/>
         <xsl:text> </xsl:text>
     </xsl:template>
 
     <xsl:template match="descendant::tei:add[@type = 'commentaire'][not(@rend = 'cacher')]" mode="marques_lecture">
+        <xsl:param name="temoin_base_edition" tunnel="yes"/>
         <xsl:variable name="id" select="@xml:id"/>
         <xsl:variable name="wit" select="myfunctions:witstosigla(@corresp)"/>
         <xsl:text>\footnoteA{</xsl:text>
@@ -627,6 +648,7 @@
     </xsl:template>
 
     <xsl:template match="tei:rdg" mode="citation_apparat">
+        <xsl:param name="temoin_base_edition" tunnel="yes"/>
         <xsl:param name="temoin_base_citation" tunnel="yes"/>
         <xsl:choose>
             <xsl:when test="descendant::tei:w">
@@ -639,6 +661,7 @@
     </xsl:template>
 
     <xsl:template match="tei:unclear" mode="citation_apparat apparat omission_simple">
+        <xsl:param name="temoin_base_edition" tunnel="yes"/>
         <xsl:param name="temoin_base_citation" tunnel="yes"/>
         <xsl:apply-templates mode="#current"/>
         <xsl:text>~(?)</xsl:text>
@@ -664,6 +687,7 @@
     <xsl:template match="tei:note" mode="citation_apparat"/>
 
     <xsl:template match="tei:p" mode="citation_apparat">
+        <xsl:param name="temoin_base_edition" tunnel="yes"/>
         <xsl:text>\\&#10;</xsl:text>
         <xsl:text>\edlabel{</xsl:text>
         <xsl:value-of select="@n"/>
@@ -676,6 +700,7 @@
     <xsl:template match="tei:fw" mode="citation_apparat sans_apparat"/>
 
     <xsl:template match="tei:lb[@break = 'yes']" mode="citation_apparat sans_apparat">
+        <xsl:param name="temoin_base_edition" tunnel="yes"/>
         <!--On va ignorer les lb-->
         <xsl:text> </xsl:text>
     </xsl:template>
@@ -687,6 +712,7 @@
     </xsl:template>-->
 
     <xsl:template match="tei:cb" mode="citation_apparat">
+        <xsl:param name="temoin_base_edition" tunnel="yes"/>
         <xsl:text>\textsuperscript{[cb]}</xsl:text>
     </xsl:template>
 
@@ -698,12 +724,14 @@
 
 
     <xsl:template match="tei:supplied" mode="citation_apparat">
+        <xsl:param name="temoin_base_edition" tunnel="yes"/>
         <xsl:text>\textit{</xsl:text>
         <xsl:apply-templates/>
         <xsl:text>}</xsl:text>
     </xsl:template>
 
     <xsl:template match="tei:add[@type = 'correction'][not(ancestor::tei:subst)]" mode="citation_apparat">
+        <xsl:param name="temoin_base_edition" tunnel="yes"/>
         <xsl:param name="temoin_base_citation" tunnel="yes"/>
         <xsl:variable name="preceding_lemma">
             <xsl:choose>
@@ -756,6 +784,7 @@
 
 
     <xsl:template match="tei:rdg[not(ancestor::tei:app[contains(@ana, 'transposition')])]" mode="citation_apparat">
+        <xsl:param name="temoin_base_edition" tunnel="yes"/>
         <xsl:param name="temoin_base_citation" tunnel="yes"/>
         <xsl:choose>
             <xsl:when test="descendant::tei:w">
@@ -772,6 +801,7 @@
 
 
     <xsl:template match="tei:rdg[ancestor::tei:app[contains(@ana, 'transposition')]]" mode="citation_apparat">
+        <xsl:param name="temoin_base_edition" tunnel="yes"/>
         <xsl:param name="temoin_base_citation" tunnel="yes"/>
         <xsl:choose>
             <xsl:when test="descendant::tei:w">

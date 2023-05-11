@@ -9,7 +9,8 @@
     <!--On sort du XML pour pouvoir imprimer les noeuds des éléments teiExample-->
     <!--Du coup ça semble poser un problème dans la production de l'esperluette.-->
 
-    <xsl:variable name="temoin_base_edition" select="'Sal_J'"/>
+    <!--    <xsl:variable name="temoin_base_edition" select="'Sal_J'"/>-->
+    <xsl:variable name="base_witness_edition" select="'Sal_J'"/>
     <xsl:variable name="tous_les_temoins">Mad_A Mad_B Mad_G Esc_Q Phil_U Sal_J Sev_R Sev_Z</xsl:variable>
     <xsl:variable name="tous_les_temoins_tokenise">
         <xsl:value-of select="tokenize($tous_les_temoins, '\s')"/>
@@ -41,7 +42,7 @@
 
 
     <xsl:variable name="chemin_temoin_base_edition"
-        select="concat('/home/mgl/Bureau/These/Edition/hyperregimiento-de-los-principes/Dedans/XML/edition/temoins/', $temoin_base_edition, '.xml')"/>
+        select="concat('/home/mgl/Bureau/These/Edition/hyperregimiento-de-los-principes/Dedans/XML/edition/temoins/', $base_witness_edition, '.xml')"/>
 
     <xsl:template match="/">
         <xsl:result-document
@@ -73,7 +74,7 @@
         <xsl:text>&#10;&#10;\cleardoublepage&#10;&#10;
         % On a un fonctionnement différent entre la thèse et l'édition.&#10;</xsl:text>
         <xsl:text>\part{Édition du texte selon le manuscrit </xsl:text>
-        <xsl:value-of select="myfunctions:witstosigla($temoin_base_edition)"/>
+        <xsl:value-of select="myfunctions:witstosigla($base_witness_edition)"/>
         <xsl:text>}&#10;\setcounter{section}{0}&#10;</xsl:text>
         <xsl:text>&#10;\pagestyle{description_edition}&#10;</xsl:text>
         <!--La description du fonctionnement de l'édition-->
@@ -96,7 +97,7 @@
             select="document($chemin_temoin_base_edition)/descendant::tei:body/descendant::tei:div[@type = 'chapitre'][16 &lt; number(@n)]"
             mode="edition"/>-->
         <xsl:apply-templates
-            select="document($chemin_temoin_base_edition)/descendant::tei:body/descendant::tei:div[@type = 'chapitre'][@n = '200' or @n = '100']"
+            select="document($chemin_temoin_base_edition)/descendant::tei:body/descendant::tei:div[@type = 'chapitre'][@n = '210' or @n = '100']"
             mode="edition"/>
         <xsl:text>\pagestyle{annexes}</xsl:text>
         <xsl:text>\setcounter{page}{1}</xsl:text>
@@ -2211,7 +2212,7 @@
                             select="document($corpus_path)//tei:*[@xml:id = $target]/ancestor::tei:TEI[1]/@xml:id"/>
                         <xsl:variable name="collated_path">
                             <xsl:value-of
-                                select="concat('/home/mgl/Bureau/These/Edition/hyperregimiento-de-los-principes/Dedans/XML/edition/temoins/', $temoin_base_edition, '.xml')"/>
+                                select="concat('/home/mgl/Bureau/These/Edition/hyperregimiento-de-los-principes/Dedans/XML/edition/temoins/', $base_witness_edition, '.xml')"/>
                             <!--Changer ici pour utiliser l'arbre reconstruit-->
                         </xsl:variable>
                         <xsl:variable name="collated_doc" select="document($collated_path)"/>
@@ -2231,8 +2232,8 @@
                             <xsl:when test="@subtype = 'debut'">
                                 <xsl:text>à partir de \enquote{\textit{</xsl:text>
                                 <xsl:apply-templates mode="sans_apparat"
-                                    select="$collated_doc/descendant::tei:anchor[@xml:id = $target]/following-sibling::tei:app[descendant::tei:rdg[contains(@wit, $temoin_base_edition) and node()]][position() &lt; $context]">
-                                    <xsl:with-param name="temoin_base_citation" select="$temoin_base_edition" tunnel="yes"/>
+                                    select="$collated_doc/descendant::tei:anchor[@xml:id = $target]/following-sibling::tei:app[descendant::tei:rdg[contains(@wit, $base_witness_edition) and node()]][position() &lt; $context]">
+                                    <xsl:with-param name="temoin_base_citation" select="$base_witness_edition" tunnel="yes"/>
                                 </xsl:apply-templates>
                                 <xsl:text>}}</xsl:text>
                             </xsl:when>
@@ -2242,8 +2243,8 @@
                                 <xsl:text>}, </xsl:text>
                                 <xsl:text>jusque \enquote{\textit{</xsl:text>
                                 <xsl:apply-templates mode="sans_apparat"
-                                    select="$collated_doc/descendant::tei:anchor[@xml:id = $target]/preceding-sibling::tei:app[descendant::tei:rdg[contains(@wit, $temoin_base_edition) and node()]][position() &lt; $context]">
-                                    <xsl:with-param name="temoin_base_citation" select="$temoin_base_edition" tunnel="yes"/>
+                                    select="$collated_doc/descendant::tei:anchor[@xml:id = $target]/preceding-sibling::tei:app[descendant::tei:rdg[contains(@wit, $base_witness_edition) and node()]][position() &lt; $context]">
+                                    <xsl:with-param name="temoin_base_citation" select="$base_witness_edition" tunnel="yes"/>
                                 </xsl:apply-templates>
                                 <xsl:text>}}</xsl:text>
                             </xsl:otherwise>
@@ -2348,16 +2349,16 @@
 
 
 
-    <xsl:template mode="these" match="tei:emph">
+    <xsl:template mode="#all" match="tei:emph">
         <xsl:choose>
             <xsl:when test="not(parent::tei:foreign)">
                 <xsl:text>\emph{</xsl:text>
-                <xsl:apply-templates mode="these"/>
+                <xsl:apply-templates mode="#current"/>
                 <xsl:text>}</xsl:text>
             </xsl:when>
             <xsl:otherwise>
                 <xsl:text>}</xsl:text>
-                <xsl:apply-templates mode="these"/>
+                <xsl:apply-templates mode="#current"/>
                 <xsl:text>\textit{</xsl:text>
             </xsl:otherwise>
         </xsl:choose>
@@ -3010,7 +3011,7 @@
                 <xsl:text> </xsl:text>
                 <xsl:value-of select="$corresponding_pb"/>
                 <xsl:choose>
-                    <xsl:when test="contains(@rend, 'sans_apparat') and not($temoin_base_edition = $corresponding_wit_id)"/>
+                    <xsl:when test="contains(@rend, 'sans_apparat') and not($base_witness_edition = $corresponding_wit_id)"/>
                     <xsl:otherwise>
                         <xsl:text>, éd. p. \edpageref{</xsl:text>
                         <xsl:value-of select="$anchor"/>
@@ -3054,7 +3055,7 @@
                 <xsl:text> </xsl:text>
                 <xsl:value-of select="$corresponding_pb"/>
                 <xsl:choose>
-                    <xsl:when test="contains(@rend, 'sans_apparat') and not($temoin_base_edition = $corresponding_wit_id)"/>
+                    <xsl:when test="contains(@rend, 'sans_apparat') and not($base_witness_edition = $corresponding_wit_id)"/>
                     <xsl:otherwise>
                         <xsl:text>, éd. p. \edpageref{</xsl:text>
                         <xsl:value-of select="$anchor"/>
@@ -3233,9 +3234,14 @@
                 on peut imprimer les notes de commentaire d'apparat, mais on ne pourra pas choisir le témoin-base.-->
                 <xsl:variable name="corresponding_div"
                     select="doc($file_path)/descendant::tei:anchor[@xml:id = $beginning_anchor]/ancestor::tei:p/@n"/>
+                <xsl:message>
+                    <xsl:text>Here we are</xsl:text>
+                </xsl:message>
                 <xsl:apply-templates
                     select="doc($collated_file_path)/descendant::tei:div[@n = $corresponding_wit_n]/descendant::node()[self::tei:p[@n = $corresponding_div] | self::tei:head[ancestor::tei:div[@type = 'chapitre'][@n = $corresponding_wit_n]]]/child::node()[preceding::tei:anchor[@xml:id = $beginning_anchor]][following::tei:anchor[@xml:id = $ending_anchor]]"
-                    mode="edition"/>
+                    mode="edition">
+                    <xsl:with-param name="temoin_base_edition" select="$corresponding_wit_id" tunnel="yes"/>
+                </xsl:apply-templates>
             </xsl:when>
             <xsl:when
                 test="not(ancestor::tei:note) and not($corresponding_wit_id = 'Val_S') and not($corresponding_wit_id = 'Rome_W') and not(@rend = 'sans_apparat') and not(@rend = 'inline') and doc-available($collated_file_path) and boolean(doc($collated_file_path)/descendant::tei:anchor[@xml:id = $beginning_anchor])">
@@ -3347,7 +3353,7 @@
                 <xsl:text> </xsl:text>
                 <xsl:value-of select="$corresponding_pb"/>
                 <xsl:choose>
-                    <xsl:when test="contains(@rend, 'sans_apparat') and not($temoin_base_edition = $corresponding_wit_id)"/>
+                    <xsl:when test="contains(@rend, 'sans_apparat') and not($base_witness_edition = $corresponding_wit_id)"/>
                     <xsl:otherwise>
                         <xsl:text>, éd. p. \edpageref{</xsl:text>
                         <xsl:value-of select="$beginning_anchor"/>
@@ -3393,7 +3399,7 @@
                     <xsl:text> </xsl:text>
                     <xsl:value-of select="$corresponding_pb"/>
                     <xsl:choose>
-                        <xsl:when test="contains(@rend, 'sans_apparat') and not($temoin_base_edition = $corresponding_wit_id)"/>
+                        <xsl:when test="contains(@rend, 'sans_apparat') and not($base_witness_edition = $corresponding_wit_id)"/>
                         <xsl:otherwise>
                             <xsl:text>, éd. p. \edpageref{</xsl:text>
                             <xsl:value-of select="$beginning_anchor"/>
