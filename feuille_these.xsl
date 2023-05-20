@@ -98,7 +98,7 @@
             select="document($chemin_temoin_base_edition)/descendant::tei:body/descendant::tei:div[@type = 'chapitre'][16 &lt; number(@n)]"
             mode="edition"/>-->
         <xsl:apply-templates
-            select="document($chemin_temoin_base_edition)/descendant::tei:body/descendant::tei:div[@type = 'chapitre'][@n = '60' or @n = '100']"
+            select="document($chemin_temoin_base_edition)/descendant::tei:body/descendant::tei:div[@type = 'chapitre'][@n = '180' or @n = '100']"
             mode="edition"/>
         <xsl:apply-templates select="//tei:TEI[@type = 'these']/descendant::tei:back/child::node()[@xml:id = 'conclusions']"
             mode="these"/>
@@ -106,7 +106,6 @@
         <xsl:text>\pagestyle{annexes}</xsl:text>
         <xsl:text>\setcounter{page}{1}</xsl:text>
         <xsl:text>&#10;\titleformat{\chapter}{}{}{0em}{\LARGE\bfseries}</xsl:text>
-        <!--À supprimer lors de la production de la thèse: on cite tous les témoins des teiHeader-->
         <xsl:text>\setcounter{chapter}{0}</xsl:text>
         <!--<xsl:apply-templates select="//tei:TEI[@type = 'these']/descendant::tei:back/child::node()[not(@xml:id = 'conclusions')]"
             mode="these"/>-->
@@ -880,16 +879,15 @@
         <xsl:text>{</xsl:text>
         <xsl:apply-templates mode="these" select="tei:head[not(@type = 'short')]"/>
         <xsl:text>}</xsl:text>
-        <xsl:if test="@rend = 'unnumbered'">
-            <xsl:text>% Unnumbered section&#10;
-                \phantomsection</xsl:text>
-            <xsl:text>\addcontentsline{toc}{section}{</xsl:text>
-            <xsl:apply-templates mode="these" select="tei:head"/>
+        <xsl:if test="@xml:id">
+            <xsl:text>\phantomsection\label{</xsl:text>
+            <xsl:value-of select="@xml:id"/>
             <xsl:text>}</xsl:text>
         </xsl:if>
-        <xsl:if test="@xml:id">
-            <xsl:text>\label{</xsl:text>
-            <xsl:value-of select="@xml:id"/>
+        <xsl:if test="@rend = 'unnumbered'">
+            <xsl:text>% Unnumbered section&#10;</xsl:text>
+            <xsl:text>\addcontentsline{toc}{section}{</xsl:text>
+            <xsl:apply-templates mode="these" select="tei:head"/>
             <xsl:text>}</xsl:text>
         </xsl:if>
         <xsl:apply-templates mode="these" select="child::tei:*[not(self::tei:head)]"/>
@@ -2124,27 +2122,19 @@
     </xsl:template>
 
 
+    <xsl:template mode="#all" match="tei:ref[@type = 'interne'][text()]">
+        <xsl:text>\hyperref[</xsl:text>
+        <xsl:value-of select="translate(@target, '#', '')"/>
+        <xsl:text>]{</xsl:text>
+        <xsl:apply-templates mode="#current"/>
+        <xsl:text>}</xsl:text>
+    </xsl:template>
 
-    <xsl:template mode="#all" match="tei:ref[@type = 'interne'][not(@rend = 'numero')]">
+    <xsl:template mode="#all" match="tei:ref[@type = 'interne'][not(@rend = 'numero')][not(text())]">
+        <!--[REPRENDRE CETTE REGLE]-->
+        <xsl:text>[VÉRIFIER\footnote{Nameref est cassé, reprendre en utilisant les informations du XML et uniquement le numéro de page qui marche bien.}]</xsl:text>
         <xsl:variable name="target" select="translate(@target, '#', '')"/>
         <xsl:choose>
-            <xsl:when test="document($corpus_path)/descendant::tei:TEI[@type = 'these']/descendant::node()[@xml:id = $target]">
-                <xsl:choose>
-                    <xsl:when test="document($corpus_path)//tei:p[@n = $target]">
-                        <xsl:text>page \edpageref{</xsl:text>
-                        <xsl:value-of select="$target"/>
-                        <xsl:text>}</xsl:text>
-                    </xsl:when>
-                    <xsl:otherwise>
-                        <xsl:text>\vref{</xsl:text>
-                        <xsl:value-of select="$target"/>
-                        <xsl:text>}</xsl:text>
-                        <!--<xsl:text>, p. \pageref{</xsl:text>
-                        <xsl:value-of select="$target"/>
-                        <xsl:text>}</xsl:text>-->
-                    </xsl:otherwise>
-                </xsl:choose>
-            </xsl:when>
             <xsl:when test="not(document($corpus_path)//tei:*[@xml:id = $target][ancestor-or-self::tei:figure])">
                 <xsl:choose>
                     <!--À adapter pour pouvoir citer les notes de l'édition en temps voulu.-->
@@ -2274,6 +2264,15 @@
                         <!--<xsl:text>, p. \pageref{</xsl:text>
                         <xsl:value-of select="$target"/>
                         <xsl:text>}</xsl:text>-->
+                    </xsl:when>
+                    <xsl:when test="//tei:*[@xml:id = $target][self::tei:div]">
+                        <xsl:text>\enquote{\hyperref[</xsl:text>
+                        <xsl:value-of select="$target"/>
+                        <xsl:text>]{</xsl:text>
+                        <xsl:apply-templates select="//tei:*[@xml:id = $target]/tei:head[not(@type='short')]"/>
+                        <xsl:text>}}, page \pageref{</xsl:text>
+                        <xsl:value-of select="$target"/>
+                        <xsl:text>}</xsl:text>
                     </xsl:when>
                     <xsl:otherwise>
                         <xsl:text>\enquote{\nameref{</xsl:text>
@@ -3179,8 +3178,9 @@
                     <!--                    <xsl:text>Cas1</xsl:text>-->
                 </xsl:when>
                 <xsl:otherwise>
+                    <!--On a des cas où le tei:pb n'est pas injecté, mais est copié avec le tei:w, quand il coupe un mot. Dans ce cas il faut bien vérifier que la parent rdg concerne le témoin qui nous intéresse-->
                     <xsl:value-of
-                        select="$corresponding_edited_element/preceding::tei:pb[translate(@corresp, '#', '') = $corresponding_wit_id][1]/@n"/>
+                        select="$corresponding_edited_element/preceding::tei:pb[not(@ana = '#injected') or translate(@corresp, '#', '') = $corresponding_wit_id][1][contains(ancestor::tei:rdg/@wit, $corresponding_wit_id)]/@n"/>
                     <!--                    <xsl:text>Cas2</xsl:text>-->
                 </xsl:otherwise>
             </xsl:choose>
@@ -3513,6 +3513,8 @@
         <xsl:apply-templates mode="these"/>
         <xsl:text>}</xsl:text>
     </xsl:template>
+
+
 
     <xsl:template match="tei:hi[@rend = 'small_caps']" mode="#all">
         <xsl:text>\textsc{</xsl:text>
