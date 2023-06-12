@@ -109,12 +109,15 @@ def gestion_type_donnees(donnee, round_value: int = 1):
     try:
         decimale = '0.' + "".join(['0' for _ in range(int(round_value) - 1)]) + '1'
         donnee = Decimal(float(donnee)).quantize(Decimal(decimale), rounding=ROUND_UP)
+        
         if donnee % 1 == 0:
-            donnee = int(donnee)
+            pass
     except:
         pass
-
-
+    try:
+        donnee = str(donnee).replace(".", ",")
+    except AttributeError:
+        print("Raised")
     return str(donnee)
 
 
@@ -128,15 +131,17 @@ def replace_ampersands():
     """
     fichier_complet = "/home/mgl/Bureau/These/Edition/outputs/these/tex/these.tex"
     liste_fichiers = [fichier_complet]
-    for file in liste_fichiers:
-        with open(file, 'r') as fichier_these:
+    for fichier in liste_fichiers:
+        with open(fichier, 'r') as fichier_these:
             these_as_string = "".join(fichier_these.readlines())
             translated = these_as_string.replace("&amp;", "&").replace("AMPERSAND", "\&")
-            translated = these_as_string.replace(" }", "}").replace("{ ", "{")
-            translated = these_as_string.replace(" \edtext{}", "\edtext{}")
-            # translated = these_as_string
-        os.remove(file)
-        with open(file, "w") as output_file:
+            translated = translated.replace(" }", "}").replace("{ ", "{").replace("{ ", "{").replace(" }", "}")
+            print("Replacing ampersands")
+            translated = translated.replace(" \edtext{}", "\edtext{}").replace(" \edtext{}", "\edtext{}")
+            translated = translated.replace("{--", "{ --").replace("{--", "{ --")
+            translated = translated.replace("¿ ", " ¿")
+        os.remove(fichier)
+        with open(fichier, "w") as output_file:
             output_file.write(translated)
 
 

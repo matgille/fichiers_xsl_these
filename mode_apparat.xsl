@@ -576,6 +576,9 @@
         <xsl:param name="temoin_base_edition" tunnel="yes"/>
         <xsl:param name="temoin_base_citation" tunnel="yes"/>
         <xsl:apply-templates select="descendant::tei:w"/>
+        <xsl:apply-templates mode="edition" select="tei:pb[contains(@corresp, $temoin_base_citation)]">
+            <xsl:with-param name="temoin_base_citation" tunnel="yes"/>
+        </xsl:apply-templates>
         <xsl:apply-templates select="tei:pc[contains(@corresp, $temoin_base_citation)]"/>
     </xsl:template>
 
@@ -583,15 +586,13 @@
 
 
     <xsl:template match="tei:w" mode="marques_lecture">
-        <xsl:param name="temoin_base_edition" tunnel="yes"/>
         <xsl:apply-templates mode="edition"/>
         <xsl:if test="not(following-sibling::node()[1][self::tei:pc or self::tei:add])">
             <xsl:text> </xsl:text>
         </xsl:if>
     </xsl:template>
     <xsl:template match="tei:pc" mode="marques_lecture">
-        <xsl:param name="temoin_base_edition" tunnel="yes"/>
-        <xsl:apply-templates/>
+        <xsl:value-of select="."/>
         <xsl:text> </xsl:text>
     </xsl:template>
 
