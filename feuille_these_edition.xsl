@@ -2101,6 +2101,10 @@
                     <xsl:text>]}</xsl:text>
                 </xsl:if>
                 <xsl:text>\phantomsection\edlabel{</xsl:text>
+                <xsl:if test="$temoin_base_citation != ''">
+                    <xsl:message>Found you</xsl:message>
+                    <xsl:text>apparat_</xsl:text>
+                </xsl:if>
                 <xsl:value-of select="@xml:id"/>
                 <xsl:text>}</xsl:text>
             </xsl:when>
@@ -2109,7 +2113,13 @@
     </xsl:template>
 
     <xsl:template match="tei:anchor[@type = 'reference']" mode="edition">
+        <xsl:param name="temoin_base_edition" tunnel="yes"/>
+        <!--https://tex.stackexchange.com/a/321814-->
+        <xsl:param name="temoin_base_citation" tunnel="yes"/>
         <xsl:text>\phantomsection\edlabel{</xsl:text>
+        <xsl:if test="$temoin_base_citation != ''">
+            <xsl:text>apparat_</xsl:text>
+        </xsl:if>
         <xsl:value-of select="@xml:id"/>
         <xsl:text>}</xsl:text>
     </xsl:template>

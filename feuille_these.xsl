@@ -108,7 +108,7 @@
             select="document($chemin_temoin_base_edition)/descendant::tei:body/descendant::tei:div[@type = 'chapitre'][16 &lt; number(@n)]"
             mode="edition"/>-->
         <xsl:apply-templates
-            select="document($chemin_temoin_base_edition)/descendant::tei:body/descendant::tei:div[@type = 'chapitre'][@n = '11' or @n = '80']"
+            select="document($chemin_temoin_base_edition)/descendant::tei:body/descendant::tei:div[@type = 'chapitre'][@n = '130' or @n = '140']"
             mode="edition"/>
         <xsl:text>\end{otherlanguage}</xsl:text>
         <xsl:text>\pagestyle{conclusions}</xsl:text>
@@ -1179,7 +1179,7 @@
                         <xsl:text> \end{quote}</xsl:text>
                     </xsl:when>
                     <xsl:when
-                        test="not(ancestor::tei:table[@rend = 'cote_a_cote']) and string-length(replace(string-join(child::text()), '\s+', ' ')) > $threshold">
+                        test="not(@rend = 'inline') and not(ancestor::tei:table[@rend = 'cote_a_cote']) and string-length(replace(string-join(child::text()), '\s+', ' ')) > $threshold">
                         <!--Ici on ne tient pas en compte les notes éventuelles: on veut calculer la taille de la citation uniquement.-->
                         <xsl:text>\begin{quote}</xsl:text>
                         <xsl:apply-templates mode="these"/>
@@ -1209,7 +1209,7 @@
                         <xsl:text>\end{otherlanguage}\end{quote}</xsl:text>
                     </xsl:when>
                     <xsl:when
-                        test="not(ancestor::tei:table[@rend = 'cote_a_cote']) and string-length(replace(string-join(child::text()), '\s+', ' ')) > $threshold">
+                        test="not(@rend = 'inline') and not(ancestor::tei:table[@rend = 'cote_a_cote']) and string-length(replace(string-join(child::text()), '\s+', ' ')) > $threshold">
                         <!--String-length n'ignore pas les espaces multiples causés par l'indentation...-->
                         <xsl:text>\begin{quote}\begin{otherlanguage}{</xsl:text>
                         <xsl:value-of select="$langue"/>
@@ -2411,6 +2411,12 @@
 
     <xsl:template mode="#all" match="tei:emph">
         <xsl:choose>
+            <xsl:when
+                test="not(ancestor::tei:quote[@type = 'primaire'][@xml:lang = 'spo']) and ancestor::tei:quote[not(@xml:lang = 'fra')]">
+                <xsl:text>{\textnormal{</xsl:text>
+                <xsl:apply-templates mode="#current"/>
+                <xsl:text>}}</xsl:text>
+            </xsl:when>
             <xsl:when test="not(parent::tei:foreign)">
                 <xsl:text>\emph{</xsl:text>
                 <xsl:apply-templates mode="#current"/>
